@@ -10,14 +10,6 @@ interface CountdownTimerProps {
 
 type IntroPhase = "loading" | "revealing" | "done";
 
-const legalLinks = [
-  ["Privacy Policy", "https://privacy.thewaltdisneycompany.com/en/current-privacy-policy/"],
-  ["Terms of Use", "https://disneytermsofuse.com"],
-  ["Interest-based Ads", "https://privacy.thewaltdisneycompany.com/en/privacy-controls/online-tracking-and-advertising/"],
-  ["Children's Online Privacy Policy", "https://disneyprivacycenter.com/kids-privacy-policy/english/"],
-  ["Your US State Privacy Rights", "https://privacy.thewaltdisneycompany.com/en/current-privacy-policy/your-us-state-privacy-rights/"],
-];
-
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const time = useCountdown(targetDate);
   const introRef = useRef<HTMLVideoElement>(null);
@@ -30,6 +22,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [trailerVisible, setTrailerVisible] = useState(false);
   const [trailerClosing, setTrailerClosing] = useState(false);
   const [introPhase, setIntroPhase] = useState<IntroPhase>("loading");
+  const [signalGlitch, setSignalGlitch] = useState(false);
 
   useEffect(() => {
     let finishTimer: number | undefined;
@@ -41,6 +34,28 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     return () => {
       window.clearTimeout(revealTimer);
       if (finishTimer) window.clearTimeout(finishTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    let triggerTimer: number | undefined;
+    let stopTimer: number | undefined;
+
+    const schedule = () => {
+      const delay = 5000 + Math.random() * 5000;
+      triggerTimer = window.setTimeout(() => {
+        setSignalGlitch(true);
+        stopTimer = window.setTimeout(() => {
+          setSignalGlitch(false);
+          schedule();
+        }, 680);
+      }, delay);
+    };
+
+    schedule();
+    return () => {
+      if (triggerTimer) window.clearTimeout(triggerTimer);
+      if (stopTimer) window.clearTimeout(stopTimer);
     };
   }, []);
 
@@ -108,7 +123,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   return (
-    <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""}`}>
+    <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""} ${signalGlitch && introPhase === "done" && !trailerVisible ? "signal-glitch" : ""}`}>
       <video
         ref={introRef}
         className={`doomsday__video ${introFinished ? "is-hidden" : ""}`}
@@ -132,6 +147,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       </video>
 
       <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />
+      <div className="signal-overlay" aria-hidden="true" />
 
       <button className="audio-button" onClick={toggleAudio} aria-label={muted ? "Ativar áudio" : "Desativar áudio"}>
         <Image src={muted ? "/audiooff.svg" : "/audio.svg"} alt="" width={48} height={48} />
@@ -161,11 +177,10 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       </main>
 
       <div className="bottom-gradient" />
-      <nav className="legal" aria-label="Links legais">
-        {legalLinks.map(([label, href]) => (
-          <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>
-        ))}
-      </nav>
+      <footer className="legal">
+        <span>AVENGERS: DOOMSDAY, seus personagens, nomes, imagens e marcas relacionadas são © Marvel. Este é um projeto de fã não oficial, sem vínculo, patrocínio ou aprovação da Marvel Studios ou da The Walt Disney Company.</span>
+        <a href="https://www.marvel.com/movies" target="_blank" rel="noreferrer">Visite o site oficial da Marvel Studios</a>
+      </footer>
       <span className="signature">by: pedrodev</span>
 
       <div className={`intro-layer is-${introPhase}`} aria-hidden={introPhase === "done"}>
