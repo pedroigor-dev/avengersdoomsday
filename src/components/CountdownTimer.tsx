@@ -48,7 +48,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         stopTimer = window.setTimeout(() => {
           setSignalGlitch(false);
           schedule();
-        }, 680);
+        }, 1400);
       }, delay);
     };
 

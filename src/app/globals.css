@@ -19,6 +19,7 @@ html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background:
 button, a { font: inherit; }
 
 .doomsday {
+  --signal-duration: 1.4s;
   position: relative;
   display: flex;
   align-items: center;
@@ -168,12 +169,12 @@ h1 {
   background: linear-gradient(90deg, rgba(0,255,139,.18), rgba(255,255,255,.08), rgba(100,255,56,.2));
   filter: blur(2px);
 }
-.signal-glitch .signal-overlay { animation: signal-overlay-flash .68s steps(1,end); }
-.signal-glitch .signal-overlay::before { animation: signal-scanlines .68s steps(2,end); }
-.signal-glitch .signal-overlay::after { animation: signal-band .68s steps(1,end); }
-.signal-glitch .doomsday__video:not(.is-hidden) { animation: background-interference .68s steps(1,end); }
-.signal-glitch .timer { animation: timer-interference .68s steps(1,end); }
-.signal-glitch .digit-clip { animation: digit-channel-shift .68s steps(1,end); }
+.signal-glitch .signal-overlay { animation: signal-overlay-flash var(--signal-duration) steps(1,end); }
+.signal-glitch .signal-overlay::before { animation: signal-scanlines var(--signal-duration) steps(2,end); }
+.signal-glitch .signal-overlay::after { animation: signal-band var(--signal-duration) steps(1,end); }
+.signal-glitch .doomsday__video:not(.is-hidden) { animation: background-interference var(--signal-duration) steps(1,end); }
+.signal-glitch .timer { animation: timer-interference var(--signal-duration) steps(1,end); }
+.signal-glitch .digit-clip { animation: digit-channel-shift var(--signal-duration) steps(1,end); }
 .signal-glitch .separator { text-shadow: -3px 0 rgba(0,255,170,.8), 3px 0 rgba(147,255,64,.55); }
 .signal-glitch .timer::before,
 .signal-glitch .timer::after {
@@ -189,13 +190,13 @@ h1 {
   top: 18%;
   height: 5px;
   background: rgba(177,255,192,.42);
-  animation: timer-slice-one .68s steps(1,end);
+  animation: timer-slice-one var(--signal-duration) steps(1,end);
 }
 .signal-glitch .timer::after {
   top: 64%;
   height: 9px;
   background: rgba(31,255,145,.25);
-  animation: timer-slice-two .68s steps(1,end);
+  animation: timer-slice-two var(--signal-duration) steps(1,end);
 }
 
 @keyframes background-interference {
