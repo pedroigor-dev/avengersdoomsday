@@ -2,10 +2,13 @@
 
 import { useCountdown } from "@/hooks/useCountdown";
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
 interface CountdownTimerProps {
   targetDate: string;
 }
+
+type IntroPhase = "loading" | "revealing" | "done";
 
 const legalLinks = [
   ["Privacy Policy", "https://privacy.thewaltdisneycompany.com/en/current-privacy-policy/"],
@@ -26,6 +29,20 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [muted, setMuted] = useState(true);
   const [trailerVisible, setTrailerVisible] = useState(false);
   const [trailerClosing, setTrailerClosing] = useState(false);
+  const [introPhase, setIntroPhase] = useState<IntroPhase>("loading");
+
+  useEffect(() => {
+    let finishTimer: number | undefined;
+    const revealTimer = window.setTimeout(() => {
+      setIntroPhase("revealing");
+      finishTimer = window.setTimeout(() => setIntroPhase("done"), 3400);
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(revealTimer);
+      if (finishTimer) window.clearTimeout(finishTimer);
+    };
+  }, []);
 
   useEffect(() => {
     if (previousSecond.current !== time.seconds && !muted) {
@@ -50,9 +67,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
             setTrailerClosing(false);
           }, 850);
         }
-      } catch {
-        // Other YouTube messages are not JSON events we need to handle.
-      }
+      } catch {}
     }
     window.addEventListener("message", receiveYouTubeEvent);
     return () => window.removeEventListener("message", receiveYouTubeEvent);
@@ -119,8 +134,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />
 
       <button className="audio-button" onClick={toggleAudio} aria-label={muted ? "Ativar áudio" : "Desativar áudio"}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={muted ? "/audiooff.svg" : "/audio.svg"} alt="" />
+        <Image src={muted ? "/audiooff.svg" : "/audio.svg"} alt="" width={48} height={48} />
       </button>
 
       <main className="countdown-content">
@@ -153,6 +167,19 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         ))}
       </nav>
       <span className="signature">by: pedrodev</span>
+
+      <div className={`intro-layer is-${introPhase}`} aria-hidden={introPhase === "done"}>
+        <div className="intro-backdrop" />
+        <div className="intro-light" />
+        <Image
+          className="intro-logo"
+          src="/logo-clean.png"
+          alt="Avengers: Doomsday"
+          width={1193}
+          height={670}
+          priority
+        />
+      </div>
 
       {trailerVisible && (
         <section className={`trailer-overlay ${trailerClosing ? "is-closing" : ""}`} aria-label="Trailer de Avengers: Doomsday">
