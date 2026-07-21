@@ -11,62 +11,40 @@ interface TimeLeft {
   isComplete: boolean;
 }
 
-export function useCountdown(targetDate: Date): TimeLeft {
-  const calculateTimeLeft = (): TimeLeft => {
-    const now = new Date();
-    const difference = targetDate.getTime() - now.getTime();
+function calculateTimeLeft(targetDate: string): TimeLeft {
+  const now = new Date();
+  const target = new Date(targetDate);
+  const difference = target.getTime() - now.getTime();
 
-    if (difference <= 0) {
-      return {
-        months: 0,
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0,
-        isComplete: true,
-      };
-    }
+  if (difference <= 0) return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0, isComplete: true };
 
-    const nowYear = now.getFullYear();
-    const nowMonth = now.getMonth();
-    const targetYear = targetDate.getFullYear();
-    const targetMonth = targetDate.getMonth();
+  let months = (target.getUTCFullYear() - now.getUTCFullYear()) * 12 + target.getUTCMonth() - now.getUTCMonth();
+  let anchor = new Date(now);
+  anchor.setUTCMonth(anchor.getUTCMonth() + months);
+  if (anchor > target) {
+    months -= 1;
+    anchor = new Date(now);
+    anchor.setUTCMonth(anchor.getUTCMonth() + months);
+  }
 
-    let months = (targetYear - nowYear) * 12 + (targetMonth - nowMonth);
-    
-    if (now.getDate() > targetDate.getDate()) {
-      months--;
-    }
-
-    const futureDate = new Date(now);
-    futureDate.setMonth(futureDate.getMonth() + months);
-    
-    const remainingDifference = targetDate.getTime() - futureDate.getTime();
-    
-    const days = Math.floor(remainingDifference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((remainingDifference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((remainingDifference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((remainingDifference % (1000 * 60)) / 1000);
-
-    return {
-      months: Math.max(0, months),
-      days: Math.max(0, days),
-      hours: Math.max(0, hours),
-      minutes: Math.max(0, minutes),
-      seconds: Math.max(0, seconds),
-      isComplete: false,
-    };
+  const remaining = target.getTime() - anchor.getTime();
+  return {
+    months,
+    days: Math.floor(remaining / 86_400_000),
+    hours: Math.floor((remaining % 86_400_000) / 3_600_000),
+    minutes: Math.floor((remaining % 3_600_000) / 60_000),
+    seconds: Math.floor((remaining % 60_000) / 1_000),
+    isComplete: false,
   };
+}
 
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>(calculateTimeLeft());
-
+export function useCountdown(targetDate: string): TimeLeft {
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate));
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
+    const update = () => setTimeLeft(calculateTimeLeft(targetDate));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
   }, [targetDate]);
-
   return timeLeft;
 }

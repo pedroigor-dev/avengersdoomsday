@@ -4,191 +4,208 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useEffect, useRef, useState } from "react";
 
 interface CountdownTimerProps {
-  targetDate: Date;
+  targetDate: string;
 }
 
+const legalLinks = [
+  ["Privacy Policy", "https://privacy.thewaltdisneycompany.com/en/current-privacy-policy/"],
+  ["Terms of Use", "https://disneytermsofuse.com"],
+  ["Interest-based Ads", "https://privacy.thewaltdisneycompany.com/en/privacy-controls/online-tracking-and-advertising/"],
+  ["Children's Online Privacy Policy", "https://disneyprivacycenter.com/kids-privacy-policy/english/"],
+  ["Your US State Privacy Rights", "https://privacy.thewaltdisneycompany.com/en/current-privacy-policy/your-us-state-privacy-rights/"],
+];
+
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
-  const { months, days, hours, minutes, seconds, isComplete } = useCountdown(targetDate);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const sinoRef = useRef<HTMLAudioElement | null>(null);
-  const previousSecondsRef = useRef<number>(seconds);
-  const previousMonthsRef = useRef<number>(months);
-  const [isPlayingSino, setIsPlayingSino] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isGlitching, setIsGlitching] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(false);
+  const time = useCountdown(targetDate);
+  const introRef = useRef<HTMLVideoElement>(null);
+  const loopRef = useRef<HTMLVideoElement>(null);
+  const tickRef = useRef<HTMLAudioElement>(null);
+  const trailerRef = useRef<HTMLIFrameElement>(null);
+  const previousSecond = useRef(time.seconds);
+  const [introFinished, setIntroFinished] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [trailerVisible, setTrailerVisible] = useState(false);
+  const [trailerClosing, setTrailerClosing] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const glitchInterval = setInterval(() => {
-      setIsGlitching(true);
-      setTimeout(() => {
-        setIsGlitching(false);
-      }, 800); 
-    }, 5000); 
-
-    return () => clearInterval(glitchInterval);
-  }, []);
-
-  useEffect(() => {
-    audioRef.current = new Audio("/relogio.mp4");
-    audioRef.current.volume = 0.9;
-    
-    sinoRef.current = new Audio("/sino.mp4");
-    sinoRef.current.volume = 0.6;
-    
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
+    if (previousSecond.current !== time.seconds && !muted) {
+      const tick = tickRef.current;
+      if (tick) {
+        tick.currentTime = 0;
+        void tick.play().catch(() => undefined);
       }
-      if (sinoRef.current) {
-        sinoRef.current.pause();
-        sinoRef.current = null;
-      }
-    };
-  }, []);
+    }
+    previousSecond.current = time.seconds;
+  }, [time.seconds, muted]);
 
   useEffect(() => {
-    if (previousMonthsRef.current !== months && previousMonthsRef.current > months && sinoRef.current && audioEnabled) {
-      setIsPlayingSino(true);
-      
-      sinoRef.current.currentTime = 0;
-      sinoRef.current.play().catch((error) => {
-        console.log("Autoplay bloqueado:", error);
-      });
-      
-      setTimeout(() => {
-        if (sinoRef.current) {
-          sinoRef.current.pause();
-          sinoRef.current.currentTime = 0;
+    function receiveYouTubeEvent(event: MessageEvent) {
+      if (!event.origin.includes("youtube.com")) return;
+      try {
+        const message = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (message?.event === "onStateChange" && message.info === 0) {
+          setTrailerClosing(true);
+          window.setTimeout(() => {
+            setTrailerVisible(false);
+            setTrailerClosing(false);
+          }, 850);
         }
-        setIsPlayingSino(false);
-      }, 12000);
+      } catch {
+        // Other YouTube messages are not JSON events we need to handle.
+      }
     }
-    previousMonthsRef.current = months;
-  }, [months, audioEnabled]);
+    window.addEventListener("message", receiveYouTubeEvent);
+    return () => window.removeEventListener("message", receiveYouTubeEvent);
+  });
 
-  useEffect(() => {
-    if (previousSecondsRef.current !== seconds && audioRef.current && !isPlayingSino && audioEnabled) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play().catch((error) => {
-        console.log("Autoplay bloqueado:", error);
-      });
+  function toggleAudio() {
+    const nextMuted = !muted;
+    setMuted(nextMuted);
+    if (!nextMuted) {
+      const activeVideo = introFinished ? loopRef.current : introRef.current;
+      if (activeVideo) void activeVideo.play().catch(() => undefined);
     }
-    previousSecondsRef.current = seconds;
-  }, [seconds, isPlayingSino, audioEnabled]);
-
-  if (!isMounted) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-8">
-        <div className="flex items-center gap-4 md:gap-8">
-          <div className="text-4xl md:text-6xl lg:text-7xl font-light text-white tracking-[0.1em]">
-            Loading...
-          </div>
-        </div>
-      </div>
-    );
   }
 
-  if (isComplete) {
-    return (
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-white tracking-[0.2em]">
-          IT&apos;S TIME
-        </h1>
-      </div>
-    );
+  function finishIntro() {
+    setIntroFinished(true);
+    if (loopRef.current) void loopRef.current.play().catch(() => undefined);
   }
 
-  const formatNumber = (num: number): string => {
-    return num.toString().padStart(2, "0");
-  };
+  function openTrailer() {
+    setTrailerClosing(false);
+    setTrailerVisible(true);
+  }
+
+  function closeTrailer() {
+    setTrailerClosing(true);
+    window.setTimeout(() => {
+      setTrailerVisible(false);
+      setTrailerClosing(false);
+    }, 850);
+  }
+
+  function connectYouTubePlayer() {
+    trailerRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: "listening", id: "doomsday-trailer" }),
+      "https://www.youtube.com",
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center gap-8 w-full max-w-7xl">
-      {!audioEnabled && (
-        <button
-          onClick={() => setAudioEnabled(true)}
-          className="mb-4 px-6 py-3 bg-[#00cc66]/20 border border-[#00cc66] text-[#00cc66] rounded-lg hover:bg-[#00cc66]/30 transition-all duration-300 hover:shadow-[0_0_20px_rgba(0,204,102,0.5)] font-light tracking-widest text-sm"
-        >
-          🔊 ENABLE SOUND
+    <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""}`}>
+      <video
+        ref={introRef}
+        className={`doomsday__video ${introFinished ? "is-hidden" : ""}`}
+        autoPlay
+        muted={muted}
+        playsInline
+        preload="auto"
+        onEnded={finishIntro}
+      >
+        <source src="/countdown_1920x1920.mp4" type="video/mp4" />
+      </video>
+      <video
+        ref={loopRef}
+        className={`doomsday__video ${introFinished ? "" : "is-hidden"}`}
+        muted={muted}
+        playsInline
+        loop
+        preload="auto"
+      >
+        <source src="/countdown_1920x1920_loop.mp4" type="video/mp4" />
+      </video>
+
+      <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />
+
+      <button className="audio-button" onClick={toggleAudio} aria-label={muted ? "Ativar áudio" : "Desativar áudio"}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={muted ? "/audiooff.svg" : "/audio.svg"} alt="" />
+      </button>
+
+      <main className="countdown-content">
+        <button className="trailer-play" onClick={openTrailer} aria-label="Assistir ao trailer">
+          <span className="trailer-play__triangle" />
+          <span className="trailer-play__label">WATCH TRAILER</span>
         </button>
+        <h1>DOOMSDAY IS COMING</h1>
+        {time.isComplete ? (
+          <p className="time-arrived">IT&apos;S TIME</p>
+        ) : (
+          <div className="timer" aria-label={`${time.months} meses, ${time.days} dias, ${time.hours} horas, ${time.minutes} minutos e ${time.seconds} segundos`}>
+            <TimeUnit value={time.months} label="MONTHS" />
+            <Separator />
+            <TimeUnit value={time.days} label="DAYS" />
+            <Separator />
+            <TimeUnit value={time.hours} label="HOURS" />
+            <Separator />
+            <TimeUnit value={time.minutes} label="MINUTES" />
+            <Separator />
+            <TimeUnit value={time.seconds} label="SECONDS" />
+          </div>
+        )}
+      </main>
+
+      <div className="bottom-gradient" />
+      <nav className="legal" aria-label="Links legais">
+        {legalLinks.map(([label, href]) => (
+          <a key={label} href={href} target="_blank" rel="noreferrer">{label}</a>
+        ))}
+      </nav>
+      <span className="signature">by: pedrodev</span>
+
+      {trailerVisible && (
+        <section className={`trailer-overlay ${trailerClosing ? "is-closing" : ""}`} aria-label="Trailer de Avengers: Doomsday">
+          <div className="curtain curtain--top" />
+          <div className="curtain curtain--bottom" />
+          <div className="trailer-frame">
+            <iframe
+              id="doomsday-trailer"
+              ref={trailerRef}
+              src="https://www.youtube.com/embed/TcBtFtkQFiU?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&playsinline=1"
+              title="Avengers: Doomsday trailer"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              onLoad={connectYouTubePlayer}
+            />
+          </div>
+          <button className="trailer-close" onClick={closeTrailer} aria-label="Fechar trailer">×</button>
+        </section>
       )}
-      <div className={`flex items-center gap-1 sm:gap-2 md:gap-4 lg:gap-8 flex-wrap justify-center ${isGlitching ? 'glitch-active' : ''}`}>
-        <TimeUnit value={formatNumber(months)} label="MONTHS" isGlitching={isGlitching} />
-        <Separator />
-        <TimeUnit value={formatNumber(days)} label="DAYS" isGlitching={isGlitching} />
-        <Separator />
-        <TimeUnit value={formatNumber(hours)} label="HOURS" isGlitching={isGlitching} />
-        <Separator />
-        <TimeUnit value={formatNumber(minutes)} label="MINUTES" isGlitching={isGlitching} />
-        <Separator />
-        <TimeUnit value={formatNumber(seconds)} label="SECONDS" isGlitching={isGlitching} />
-      </div>
     </div>
   );
 }
 
-function TimeUnit({ value, label, isGlitching }: { value: string; label: string; isGlitching: boolean }) {
+function TimeUnit({ value, label }: { value: number; label: string }) {
+  const digits = String(value).padStart(2, "0").slice(-2);
   return (
-    <div className="flex flex-col items-center min-w-[40px] sm:min-w-[60px]">
-      <span 
-        className={`relative inline-block text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-light tracking-[0.05em] md:tracking-[0.1em] tabular-nums ${
-          isGlitching ? 'animate-glitch' : ''
-        }`}
-        style={{
-          textShadow: isGlitching 
-            ? `-2px 0 #00b359, 2px 0 #4a5f4a, 0 0 15px #00cc66, 0 0 30px #00b359, 0 0 45px #00994d`
-            : 'none',
-          color: isGlitching ? '#00cc66' : '#ffffff',
-          filter: isGlitching ? 'brightness(1.6) contrast(1.3) saturate(1.2)' : 'brightness(1.1)',
-          transition: 'all 0.1s ease-out'
-        }}
-      >
-        {value}
-        
-        {isGlitching && (
-          <>
-            <span 
-              className="absolute top-0 left-0 opacity-75"
-              style={{
-                color: '#00cc66',
-                transform: 'translateX(-2px)',
-                clipPath: 'polygon(0 0, 100% 0, 100% 45%, 0 45%)',
-                textShadow: '0 0 10px #00b359'
-              }}
-            >
-              {value}
-            </span>
-            <span 
-              className="absolute top-0 left-0 opacity-75"
-              style={{
-                color: '#5a6e5a',
-                transform: 'translateX(2px)',
-                clipPath: 'polygon(0 55%, 100% 55%, 100% 100%, 0 100%)',
-                textShadow: '0 0 10px #4a5f4a'
-              }}
-            >
-              {value}
-            </span>
-          </>
-        )}
-      </span>
-      <span className="text-[7px] sm:text-[9px] md:text-xs text-white/80 tracking-[0.2em] sm:tracking-[0.3em] mt-1 md:mt-2 font-light">
-        {label}
-      </span>
+    <div className="time-unit">
+      <div className="digit-pair">
+        <Digit value={Number(digits[0])} />
+        <Digit value={Number(digits[1])} />
+      </div>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function Digit({ value }: { value: number }) {
+  const items = Array.from({ length: 11 }, (_, index) => index % 10);
+  return (
+    <div className="digit-slot" aria-hidden="true">
+      <div className="digit-clip">
+        <div className="digit-strip" style={{ transform: `translateY(-${value * (100 / 11)}%) translateZ(0)` }}>
+          {items.map((digit, index) => {
+            const column = digit % 4;
+            const row = Math.floor(digit / 4);
+            return <div key={index} className="digit" style={{ backgroundPosition: `${2.5 - column * 75}px ${2.5 - row * 75}px` }} />;
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
 function Separator() {
-  return (
-    <span className="text-2xl sm:text-3xl md:text-5xl lg:text-7xl font-light text-white/60 -mt-4 md:-mt-8">
-      :
-    </span>
-  );
+  return <span className="separator" aria-hidden="true">:</span>;
 }
