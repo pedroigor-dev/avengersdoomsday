@@ -185,18 +185,19 @@ h1 {
   width: 104%;
   pointer-events: none;
   mix-blend-mode: screen;
+  opacity: 0;
 }
 .signal-glitch .timer::before {
   top: 18%;
   height: 5px;
   background: rgba(177,255,192,.42);
-  animation: timer-slice-one var(--signal-duration) steps(1,end);
+  animation: timer-slice-one var(--signal-duration) steps(1,end) both;
 }
 .signal-glitch .timer::after {
   top: 64%;
   height: 9px;
   background: rgba(31,255,145,.25);
-  animation: timer-slice-two var(--signal-duration) steps(1,end);
+  animation: timer-slice-two var(--signal-duration) steps(1,end) both;
 }
 
 @keyframes background-interference {

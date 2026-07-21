@@ -16,6 +16,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const loopRef = useRef<HTMLVideoElement>(null);
   const tickRef = useRef<HTMLAudioElement>(null);
   const trailerRef = useRef<HTMLIFrameElement>(null);
+  const audioFadeFrame = useRef<number | null>(null);
   const previousSecond = useRef(time.seconds);
   const [introFinished, setIntroFinished] = useState(false);
   const [muted, setMuted] = useState(true);
@@ -23,6 +24,33 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [trailerClosing, setTrailerClosing] = useState(false);
   const [introPhase, setIntroPhase] = useState<IntroPhase>("loading");
   const [signalGlitch, setSignalGlitch] = useState(false);
+
+  function fadeSiteAudio(targetVolume: number, duration: number) {
+    if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
+
+    const media = [introRef.current, loopRef.current, tickRef.current].filter(
+      (element): element is HTMLMediaElement => element !== null,
+    );
+    const initialVolumes = media.map((element) => element.volume);
+    const startedAt = performance.now();
+
+    const updateVolume = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const easedProgress = progress * progress * (3 - 2 * progress);
+
+      media.forEach((element, index) => {
+        element.volume = initialVolumes[index] + (targetVolume - initialVolumes[index]) * easedProgress;
+      });
+
+      if (progress < 1) {
+        audioFadeFrame.current = window.requestAnimationFrame(updateVolume);
+      } else {
+        audioFadeFrame.current = null;
+      }
+    };
+
+    audioFadeFrame.current = window.requestAnimationFrame(updateVolume);
+  }
 
   useEffect(() => {
     let finishTimer: number | undefined;
@@ -76,6 +104,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       try {
         const message = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
         if (message?.event === "onStateChange" && message.info === 0) {
+          if (!muted) fadeSiteAudio(1, 1300);
           setTrailerClosing(true);
           window.setTimeout(() => {
             setTrailerVisible(false);
@@ -92,6 +121,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     const nextMuted = !muted;
     setMuted(nextMuted);
     if (!nextMuted) {
+      fadeSiteAudio(trailerVisible ? 0 : 1, 350);
       const activeVideo = introFinished ? loopRef.current : introRef.current;
       if (activeVideo) void activeVideo.play().catch(() => undefined);
     }
@@ -103,11 +133,13 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   function openTrailer() {
+    if (!muted) fadeSiteAudio(0, 900);
     setTrailerClosing(false);
     setTrailerVisible(true);
   }
 
   function closeTrailer() {
+    if (!muted) fadeSiteAudio(1, 1300);
     setTrailerClosing(true);
     window.setTimeout(() => {
       setTrailerVisible(false);
