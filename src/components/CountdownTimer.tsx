@@ -15,9 +15,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const introRef = useRef<HTMLVideoElement>(null);
   const loopRef = useRef<HTMLVideoElement>(null);
   const tickRef = useRef<HTMLAudioElement>(null);
+  const ambientRef = useRef<HTMLAudioElement>(null);
   const trailerRef = useRef<HTMLIFrameElement>(null);
   const audioFadeFrame = useRef<number | null>(null);
   const previousSecond = useRef(time.seconds);
+  const tickCycle = useRef(0);
   const [introFinished, setIntroFinished] = useState(false);
   const [muted, setMuted] = useState(true);
   const [trailerVisible, setTrailerVisible] = useState(false);
@@ -25,20 +27,24 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [introPhase, setIntroPhase] = useState<IntroPhase>("loading");
   const [signalGlitch, setSignalGlitch] = useState(false);
 
-  function fadeSiteAudio(targetVolume: number, duration: number) {
+  function fadeSiteAudio(targetLevel: number, duration: number) {
     if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
 
-    const media = [introRef.current, loopRef.current, tickRef.current].filter(
-      (element): element is HTMLMediaElement => element !== null,
-    );
-    const initialVolumes = media.map((element) => element.volume);
+    const media = [
+      { element: introRef.current, baseVolume: 1 },
+      { element: loopRef.current, baseVolume: 1 },
+      { element: tickRef.current, baseVolume: 1 },
+      { element: ambientRef.current, baseVolume: 0.13 },
+    ].filter((track): track is { element: HTMLMediaElement; baseVolume: number } => track.element !== null);
+    const initialVolumes = media.map(({ element }) => element.volume);
     const startedAt = performance.now();
 
     const updateVolume = (now: number) => {
       const progress = Math.min((now - startedAt) / duration, 1);
       const easedProgress = progress * progress * (3 - 2 * progress);
 
-      media.forEach((element, index) => {
+      media.forEach(({ element, baseVolume }, index) => {
+        const targetVolume = baseVolume * targetLevel;
         element.volume = initialVolumes[index] + (targetVolume - initialVolumes[index]) * easedProgress;
       });
 
@@ -90,10 +96,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   useEffect(() => {
     if (previousSecond.current !== time.seconds && !muted) {
       const tick = tickRef.current;
-      if (tick) {
+      if (tick && tickCycle.current % 2 === 0) {
         tick.currentTime = 0;
         void tick.play().catch(() => undefined);
       }
+      tickCycle.current += 1;
     }
     previousSecond.current = time.seconds;
   }, [time.seconds, muted]);
@@ -121,6 +128,12 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     const nextMuted = !muted;
     setMuted(nextMuted);
     if (!nextMuted) {
+      const ambient = ambientRef.current;
+      if (ambient) {
+        ambient.volume = 0.13;
+        if (ambient.currentTime < 50.923) ambient.currentTime = 50.923;
+        void ambient.play().catch(() => undefined);
+      }
       fadeSiteAudio(trailerVisible ? 0 : 1, 350);
       const activeVideo = introFinished ? loopRef.current : introRef.current;
       if (activeVideo) void activeVideo.play().catch(() => undefined);
@@ -130,6 +143,13 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   function finishIntro() {
     setIntroFinished(true);
     if (loopRef.current) void loopRef.current.play().catch(() => undefined);
+  }
+
+  function restartAmbient() {
+    const ambient = ambientRef.current;
+    if (!ambient) return;
+    ambient.currentTime = 50.923;
+    void ambient.play().catch(() => undefined);
   }
 
   function openTrailer() {
@@ -179,6 +199,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       </video>
 
       <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />
+      <audio ref={ambientRef} src="/sounds/1234.mp3" preload="auto" muted={muted} onEnded={restartAmbient} />
       <div className="signal-overlay" aria-hidden="true" />
 
       <button className="audio-button" onClick={toggleAudio} aria-label={muted ? "Ativar áudio" : "Desativar áudio"}>
