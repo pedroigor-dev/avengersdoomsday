@@ -38,6 +38,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [shareFile, setShareFile] = useState<File | null>(null);
+  const [shareImageFile, setShareImageFile] = useState<File | null>(null);
 
   function fadeSiteAudio(targetLevel: number, duration: number) {
     if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
@@ -255,6 +256,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     try {
       setShareStatus("generating");
       setShareFile(null);
+      setShareImageFile(null);
       await document.fonts.ready;
 
       const video = introFinished ? loopRef.current : introRef.current;
@@ -311,6 +313,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
           const extension = mimeType.includes("mp4") ? "mp4" : "webm";
           const file = new File(chunks, `doomsday-countdown.${extension}`, { type: mimeType });
           if (file.size > 0) {
+            drawStoryFrame(context, canvas, video, logo, snapshot);
+            const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+            if (imageBlob) {
+              setShareImageFile(new File([imageBlob], "doomsday-countdown.png", { type: "image/png" }));
+            }
             setShareFile(file);
             setShareStatus("ready");
             return;
@@ -321,7 +328,9 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       drawStoryFrame(context, canvas, video, logo, snapshot);
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Image generation failed");
-      setShareFile(new File([blob], "doomsday-countdown.png", { type: "image/png" }));
+      const imageFile = new File([blob], "doomsday-countdown.png", { type: "image/png" });
+      setShareFile(imageFile);
+      setShareImageFile(imageFile);
       setShareStatus("ready");
     } catch {
       setShareStatus("error");
@@ -342,13 +351,19 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
   async function shareStory() {
     if (!shareFile) return;
+    const selectedFile = navigator.canShare?.({ files: [shareFile] })
+      ? shareFile
+      : shareImageFile && navigator.canShare?.({ files: [shareImageFile] })
+        ? shareImageFile
+        : null;
     const data = {
-      files: [shareFile],
+      ...(selectedFile ? { files: [selectedFile] } : {}),
       title: "DOOMSDAY IS COMING",
       text: "Minha contagem regressiva para Avengers: Doomsday",
+      url: window.location.href,
     };
 
-    if (navigator.share && navigator.canShare?.({ files: [shareFile] })) {
+    if (navigator.share) {
       try {
         await navigator.share(data);
         return;
@@ -356,12 +371,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         if (error instanceof DOMException && error.name === "AbortError") return;
       }
     }
-
-    const download = document.createElement("a");
-    download.href = URL.createObjectURL(shareFile);
-    download.download = shareFile.name;
-    download.click();
-    window.setTimeout(() => URL.revokeObjectURL(download.href), 1000);
+    setShareStatus("error");
   }
 
   return (
