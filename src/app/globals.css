@@ -72,6 +72,30 @@ button, a { font: inherit; }
 }
 .audio-button img { display: block; width: 100%; height: 100%; }
 
+.share-button {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 5.5rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border: 1px solid rgba(224,255,224,.72);
+  border-radius: 999px;
+  background: rgba(1,12,7,.38);
+  box-shadow: inset 0 0 1rem rgba(94,255,130,.08), 0 0 1.2rem rgba(0,0,0,.35);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .13rem;
+  cursor: pointer;
+  opacity: 0;
+  backdrop-filter: blur(8px);
+}
+
 .countdown-content {
   --content-scale: 1;
   position: absolute;
@@ -85,7 +109,7 @@ button, a { font: inherit; }
   filter: blur(8px);
   animation: reveal-countdown 1.15s cubic-bezier(.16,1,.3,1) .65s forwards;
 }
-.is-ready .audio-button, .is-ready .legal, .is-ready .signature { opacity: 1; }
+.is-ready .audio-button, .is-ready .share-button, .is-ready .legal, .is-ready .signature { opacity: 1; }
 
 @keyframes reveal-countdown {
   0% {
@@ -298,17 +322,99 @@ h1 {
   white-space: nowrap;
 }
 
-.doomsday__video, .countdown-content, .audio-button, .legal, .signature {
+.doomsday__video, .countdown-content, .audio-button, .share-button, .legal, .signature {
   transition: filter .8s cubic-bezier(.16,1,.3,1), opacity .7s ease;
 }
 .trailer-active > .doomsday__video,
 .trailer-active > .countdown-content,
 .trailer-active > .audio-button,
+.trailer-active > .share-button,
 .trailer-active > .legal,
 .trailer-active > .signature {
   filter: blur(18px) brightness(.28);
   opacity: .32;
 }
+
+.share-dialog {
+  position: fixed;
+  z-index: 45;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(0,5,3,.78);
+  backdrop-filter: blur(18px) brightness(.45);
+  animation: share-dialog-in .4s ease both;
+}
+
+.share-dialog__panel {
+  position: relative;
+  width: min(88vw, 25rem);
+  padding: 2.5rem 1.5rem 1.6rem;
+  border: 1px solid rgba(191,255,201,.3);
+  background: linear-gradient(145deg, rgba(18,43,29,.94), rgba(2,8,5,.98));
+  box-shadow: 0 2rem 6rem rgba(0,0,0,.72), inset 0 0 3rem rgba(47,255,107,.06);
+  text-align: center;
+}
+
+.share-dialog__close {
+  position: absolute;
+  top: .65rem;
+  right: .75rem;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.72);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.share-dialog__eyebrow {
+  color: #86e99b;
+  font-size: .58rem;
+  letter-spacing: .2rem;
+}
+
+.share-dialog h2 {
+  margin: .7rem 0 1rem;
+  font-size: 1.35rem;
+  letter-spacing: .08rem;
+}
+
+.share-dialog p {
+  margin: 0 auto 1.25rem;
+  color: rgba(255,255,255,.72);
+  font-family: Arial, sans-serif;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.share-dialog__action {
+  min-height: 2.8rem;
+  padding: 0 1.35rem;
+  border: 1px solid rgba(220,255,225,.78);
+  background: rgba(93,238,119,.12);
+  color: #fff;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .11rem;
+  cursor: pointer;
+}
+
+.share-dialog__loader {
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: .5rem auto 1.1rem;
+  border: 2px solid rgba(132,237,153,.2);
+  border-top-color: #84ed99;
+  border-radius: 50%;
+  animation: share-spin .8s linear infinite;
+}
+
+@keyframes share-spin { to { transform: rotate(360deg); } }
+@keyframes share-dialog-in { from { opacity: 0; } to { opacity: 1; } }
 .trailer-overlay {
   position: fixed;
   z-index: 20;
@@ -525,6 +631,7 @@ h1 {
   .legal { gap: .25rem .75rem; bottom: .75rem; }
   .legal span, .legal a { font-size: .425rem; line-height: .65rem; }
   .audio-button { top: 1rem; right: 1rem; width: 2.5rem; height: 2.5rem; }
+  .share-button { display: flex; }
   .trailer-frame { width: 94vw; }
   .trailer-play { width: 4rem; height: 4rem; bottom: calc(100% + 1.75rem); }
   .trailer-close { top: .75rem; right: .75rem; }

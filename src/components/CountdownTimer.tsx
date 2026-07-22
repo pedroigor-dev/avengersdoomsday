@@ -9,6 +9,15 @@ interface CountdownTimerProps {
 }
 
 type IntroPhase = "loading" | "revealing" | "done";
+type ShareStatus = "idle" | "generating" | "ready" | "error";
+
+interface StorySnapshot {
+  months: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const time = useCountdown(targetDate);
@@ -26,6 +35,9 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [trailerClosing, setTrailerClosing] = useState(false);
   const [introPhase, setIntroPhase] = useState<IntroPhase>("loading");
   const [signalGlitch, setSignalGlitch] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
+  const [shareFile, setShareFile] = useState<File | null>(null);
 
   function fadeSiteAudio(targetLevel: number, duration: number) {
     if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
@@ -174,6 +186,184 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     );
   }
 
+  function drawStoryFrame(
+    context: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+    video: HTMLVideoElement,
+    logo: HTMLImageElement,
+    snapshot: StorySnapshot,
+  ) {
+    const { width, height } = canvas;
+    const videoWidth = video.videoWidth || 1920;
+    const videoHeight = video.videoHeight || 1920;
+    const sourceHeight = videoHeight / 2.1;
+    const sourceWidth = sourceHeight * (width / height);
+
+    context.drawImage(
+      video,
+      (videoWidth - sourceWidth) / 2,
+      (videoHeight - sourceHeight) / 2,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      width,
+      height,
+    );
+
+    const shade = context.createLinearGradient(0, 0, 0, height);
+    shade.addColorStop(0, "rgba(0,0,0,.5)");
+    shade.addColorStop(.35, "rgba(0,0,0,.05)");
+    shade.addColorStop(.72, "rgba(0,0,0,.12)");
+    shade.addColorStop(1, "rgba(0,0,0,.78)");
+    context.fillStyle = shade;
+    context.fillRect(0, 0, width, height);
+
+    const logoWidth = width * .64;
+    const logoHeight = logoWidth * (logo.naturalHeight / logo.naturalWidth);
+    context.drawImage(logo, (width - logoWidth) / 2, height * .12, logoWidth, logoHeight);
+
+    context.textAlign = "center";
+    context.fillStyle = "#fff";
+    context.shadowColor = "rgba(0,0,0,.9)";
+    context.shadowBlur = 18;
+    context.font = "900 34px 'Avenir Doomsday', Arial";
+    context.letterSpacing = "5px";
+    context.fillText("DOOMSDAY IS COMING", width / 2, height * .58);
+
+    const values = [snapshot.months, snapshot.days, snapshot.hours, snapshot.minutes, snapshot.seconds]
+      .map((value) => String(value).padStart(2, "0"));
+    context.font = "900 62px 'Avenir Doomsday', Arial";
+    context.letterSpacing = "8px";
+    context.fillText(values.join(":"), width / 2, height * .65);
+
+    const labels = ["MONTHS", "DAYS", "HOURS", "MINUTES", "SECONDS"];
+    context.font = "800 13px 'Avenir Doomsday', Arial";
+    context.letterSpacing = "2px";
+    const startX = width * .145;
+    const gap = width * .1775;
+    labels.forEach((label, index) => context.fillText(label, startX + gap * index, height * .685));
+
+    context.font = "400 15px Arial";
+    context.letterSpacing = "1px";
+    context.fillStyle = "rgba(255,255,255,.78)";
+    context.fillText("DOOMSDAY - DEVPEDRO", width / 2, height * .91);
+    context.shadowBlur = 0;
+  }
+
+  async function generateStory(snapshot: StorySnapshot) {
+    try {
+      setShareStatus("generating");
+      setShareFile(null);
+      await document.fonts.ready;
+
+      const video = introFinished ? loopRef.current : introRef.current;
+      if (!video) throw new Error("Background video unavailable");
+
+      const logo = new window.Image();
+      logo.src = "/logo-clean.png";
+      await logo.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 720;
+      canvas.height = 1280;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Canvas unavailable");
+
+      const captureStream = canvas.captureStream?.bind(canvas);
+      const canRecord = typeof MediaRecorder !== "undefined" && Boolean(captureStream);
+
+      if (canRecord) {
+        const formats = [
+          "video/mp4;codecs=avc1.42E01E",
+          "video/mp4",
+          "video/webm;codecs=vp9",
+          "video/webm",
+        ];
+        const mimeType = formats.find((format) => MediaRecorder.isTypeSupported(format));
+
+        if (mimeType) {
+          const stream = canvas.captureStream(24);
+          const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+          const chunks: BlobPart[] = [];
+          let animationFrame = 0;
+
+          recorder.ondataavailable = (event) => {
+            if (event.data.size) chunks.push(event.data);
+          };
+
+          const stopped = new Promise<void>((resolve) => {
+            recorder.onstop = () => resolve();
+          });
+
+          const render = () => {
+            drawStoryFrame(context, canvas, video, logo, snapshot);
+            animationFrame = window.requestAnimationFrame(render);
+          };
+
+          recorder.start(250);
+          render();
+          window.setTimeout(() => recorder.stop(), 5000);
+          await stopped;
+          window.cancelAnimationFrame(animationFrame);
+          stream.getTracks().forEach((track) => track.stop());
+
+          const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+          const file = new File(chunks, `doomsday-countdown.${extension}`, { type: mimeType });
+          if (file.size > 0) {
+            setShareFile(file);
+            setShareStatus("ready");
+            return;
+          }
+        }
+      }
+
+      drawStoryFrame(context, canvas, video, logo, snapshot);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Image generation failed");
+      setShareFile(new File([blob], "doomsday-countdown.png", { type: "image/png" }));
+      setShareStatus("ready");
+    } catch {
+      setShareStatus("error");
+    }
+  }
+
+  function prepareShare() {
+    const snapshot = {
+      months: time.months,
+      days: time.days,
+      hours: time.hours,
+      minutes: time.minutes,
+      seconds: time.seconds,
+    };
+    setShareOpen(true);
+    void generateStory(snapshot);
+  }
+
+  async function shareStory() {
+    if (!shareFile) return;
+    const data = {
+      files: [shareFile],
+      title: "DOOMSDAY IS COMING",
+      text: "Minha contagem regressiva para Avengers: Doomsday",
+    };
+
+    if (navigator.share && navigator.canShare?.({ files: [shareFile] })) {
+      try {
+        await navigator.share(data);
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      }
+    }
+
+    const download = document.createElement("a");
+    download.href = URL.createObjectURL(shareFile);
+    download.download = shareFile.name;
+    download.click();
+    window.setTimeout(() => URL.revokeObjectURL(download.href), 1000);
+  }
+
   return (
     <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""} ${signalGlitch && introPhase === "done" && !trailerVisible ? "signal-glitch" : ""}`}>
       <video
@@ -205,6 +395,9 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       <button className="audio-button" onClick={toggleAudio} aria-label={muted ? "Ativar áudio" : "Desativar áudio"}>
         <Image src={muted ? "/audiooff.svg" : "/audio.svg"} alt="" width={48} height={48} />
       </button>
+      <button className="share-button" onClick={prepareShare} aria-label="Compartilhar contagem nos Stories">
+        <span>SHARE</span>
+      </button>
 
       <main className="countdown-content">
         <button className="trailer-play" onClick={openTrailer} aria-label="Assistir ao trailer">
@@ -235,6 +428,24 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         <a href="https://www.marvel.com/movies" target="_blank" rel="noreferrer">Visite o site oficial da Marvel Studios</a>
       </footer>
       <span className="signature">by: pedrodev</span>
+
+      {shareOpen && (
+        <section className="share-dialog" role="dialog" aria-modal="true" aria-label="Compartilhar nos Stories">
+          <div className="share-dialog__panel">
+            <button className="share-dialog__close" onClick={() => setShareOpen(false)} aria-label="Fechar">×</button>
+            <span className="share-dialog__eyebrow">INSTAGRAM STORIES</span>
+            <h2>{shareStatus === "generating" ? "CRIANDO SEU STORY" : "SEU STORY ESTÁ PRONTO"}</h2>
+            {shareStatus === "generating" && <div className="share-loader"><span /></div>}
+            {shareStatus === "ready" && (
+              <>
+                <p>O horário foi congelado no instante em que você tocou em compartilhar. Escolha Instagram na próxima tela e publique nos Stories.</p>
+                <button className="share-dialog__action" onClick={shareStory}>COMPARTILHAR AGORA</button>
+              </>
+            )}
+            {shareStatus === "error" && <p>Não foi possível criar a mídia neste navegador. Tente novamente pelo Safari ou Chrome atualizado.</p>}
+          </div>
+        </section>
+      )}
 
       <div className={`intro-layer is-${introPhase}`} aria-hidden={introPhase === "done"}>
         <div className="intro-backdrop" />
