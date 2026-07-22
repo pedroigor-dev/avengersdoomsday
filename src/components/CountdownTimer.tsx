@@ -259,12 +259,44 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       setShareImageFile(null);
       await document.fonts.ready;
 
-      const video = introFinished ? loopRef.current : introRef.current;
+      const preferredVideo = introFinished ? loopRef.current : introRef.current;
+      const alternateVideo = introFinished ? introRef.current : loopRef.current;
+      const video = [preferredVideo, alternateVideo].find(
+        (candidate) => candidate && candidate.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA,
+      ) ?? preferredVideo;
       if (!video) throw new Error("Background video unavailable");
+
+      if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        await new Promise<void>((resolve, reject) => {
+          const timeout = window.setTimeout(() => reject(new Error("Video frame unavailable")), 5000);
+          const finish = () => {
+            window.clearTimeout(timeout);
+            video.removeEventListener("loadeddata", finish);
+            video.removeEventListener("error", fail);
+            resolve();
+          };
+          const fail = () => {
+            window.clearTimeout(timeout);
+            video.removeEventListener("loadeddata", finish);
+            video.removeEventListener("error", fail);
+            reject(new Error("Video failed to load"));
+          };
+          video.addEventListener("loadeddata", finish, { once: true });
+          video.addEventListener("error", fail, { once: true });
+          video.load();
+        });
+      }
 
       const logo = new window.Image();
       logo.src = "/logo-clean.png";
-      await logo.decode();
+      if (!logo.complete) {
+        await new Promise<void>((resolve, reject) => {
+          logo.onload = () => resolve();
+          logo.onerror = () => reject(new Error("Logo unavailable"));
+        });
+      } else if (logo.decode) {
+        await logo.decode();
+      }
 
       const canvas = document.createElement("canvas");
       canvas.width = 720;
@@ -272,65 +304,66 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Canvas unavailable");
 
+      drawStoryFrame(context, canvas, video, logo, snapshot);
+      const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!imageBlob) throw new Error("Image generation failed");
+      const imageFile = new File([imageBlob], "doomsday-countdown.png", { type: "image/png" });
+      setShareFile(imageFile);
+      setShareImageFile(imageFile);
+
       const captureStream = canvas.captureStream?.bind(canvas);
       const canRecord = typeof MediaRecorder !== "undefined" && Boolean(captureStream);
 
       if (canRecord) {
-        const formats = [
-          "video/mp4;codecs=avc1.42E01E",
-          "video/mp4",
-          "video/webm;codecs=vp9",
-          "video/webm",
-        ];
-        const mimeType = formats.find((format) => MediaRecorder.isTypeSupported(format));
+        try {
+          const formats = [
+            "video/mp4;codecs=avc1.42E01E",
+            "video/mp4",
+            "video/webm;codecs=vp9",
+            "video/webm",
+          ];
+          const mimeType = formats.find((format) => MediaRecorder.isTypeSupported(format));
 
-        if (mimeType) {
-          const stream = canvas.captureStream(24);
-          const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
-          const chunks: BlobPart[] = [];
-          let animationFrame = 0;
+          if (mimeType) {
+            const stream = canvas.captureStream(24);
+            const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+            const chunks: BlobPart[] = [];
+            let animationFrame = 0;
 
-          recorder.ondataavailable = (event) => {
-            if (event.data.size) chunks.push(event.data);
-          };
+            recorder.ondataavailable = (event) => {
+              if (event.data.size) chunks.push(event.data);
+            };
 
-          const stopped = new Promise<void>((resolve) => {
-            recorder.onstop = () => resolve();
-          });
+            const stopped = new Promise<void>((resolve) => {
+              recorder.onstop = () => resolve();
+              recorder.onerror = () => resolve();
+            });
 
-          const render = () => {
-            drawStoryFrame(context, canvas, video, logo, snapshot);
-            animationFrame = window.requestAnimationFrame(render);
-          };
+            const render = () => {
+              drawStoryFrame(context, canvas, video, logo, snapshot);
+              animationFrame = window.requestAnimationFrame(render);
+            };
 
-          recorder.start(250);
-          render();
-          window.setTimeout(() => recorder.stop(), 5000);
-          await stopped;
-          window.cancelAnimationFrame(animationFrame);
-          stream.getTracks().forEach((track) => track.stop());
+            recorder.start(250);
+            render();
+            window.setTimeout(() => {
+              if (recorder.state !== "inactive") recorder.stop();
+            }, 5000);
+            await stopped;
+            window.cancelAnimationFrame(animationFrame);
+            stream.getTracks().forEach((track) => track.stop());
 
-          const extension = mimeType.includes("mp4") ? "mp4" : "webm";
-          const file = new File(chunks, `doomsday-countdown.${extension}`, { type: mimeType });
-          if (file.size > 0) {
-            drawStoryFrame(context, canvas, video, logo, snapshot);
-            const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-            if (imageBlob) {
-              setShareImageFile(new File([imageBlob], "doomsday-countdown.png", { type: "image/png" }));
+            const extension = mimeType.includes("mp4") ? "mp4" : "webm";
+            const file = new File(chunks, `doomsday-countdown.${extension}`, { type: mimeType });
+            if (file.size > 0) {
+              setShareFile(file);
             }
-            setShareFile(file);
-            setShareStatus("ready");
-            return;
           }
+        } catch {
+          setShareFile(imageFile);
         }
       }
 
-      drawStoryFrame(context, canvas, video, logo, snapshot);
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-      if (!blob) throw new Error("Image generation failed");
-      const imageFile = new File([blob], "doomsday-countdown.png", { type: "image/png" });
-      setShareFile(imageFile);
-      setShareImageFile(imageFile);
       setShareStatus("ready");
     } catch {
       setShareStatus("error");
