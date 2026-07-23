@@ -374,6 +374,15 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   function prepareShare() {
+    if (window.self !== window.top) {
+      const directPage = window.open(window.location.href, "_blank", "noopener,noreferrer");
+      if (!directPage) {
+        setShareError("Abra avengersdoomsdaydev.vercel.app diretamente no Chrome para compartilhar.");
+        setShareStatus("error");
+        setShareOpen(true);
+      }
+      return;
+    }
     const snapshot = {
       months: time.months,
       days: time.days,
@@ -387,6 +396,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
   async function shareStory() {
     if (!shareFile) return;
+    if (window.self !== window.top) {
+      setShareError("A página está dentro de um preview que bloqueia compartilhamentos. Abra avengersdoomsdaydev.vercel.app diretamente no Chrome.");
+      setShareStatus("error");
+      return;
+    }
     let selectedFile: File | null = null;
     try {
       const isCompatibleVideo = shareFile.type.startsWith("video/mp4");
