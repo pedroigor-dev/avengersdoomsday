@@ -310,7 +310,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     edgeMist.addColorStop(.68, "rgba(8,39,22,.12)");
     edgeMist.addColorStop(1, "rgba(0,12,7,.54)");
     context.fillStyle = edgeMist;
-    context.fillRect(0, Math.max(0, artworkY - 80), width, Math.min(height, artworkHeight + 160));
+    context.fillRect(0, 0, width, height);
 
     const emeraldHaze = context.createRadialGradient(width * .5, height * .48, 20, width * .5, height * .48, height * .62);
     emeraldHaze.addColorStop(0, "rgba(73,170,92,.08)");
