@@ -39,6 +39,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [shareFile, setShareFile] = useState<File | null>(null);
   const [shareImageFile, setShareImageFile] = useState<File | null>(null);
+  const [shareError, setShareError] = useState("");
 
   function fadeSiteAudio(targetLevel: number, duration: number) {
     if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
@@ -255,6 +256,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   async function generateStory(snapshot: StorySnapshot) {
     try {
       setShareStatus("generating");
+      setShareError("");
       setShareFile(null);
       setShareImageFile(null);
       await document.fonts.ready;
@@ -365,7 +367,8 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       }
 
       setShareStatus("ready");
-    } catch {
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : "Falha ao gerar a mídia");
       setShareStatus("error");
     }
   }
@@ -384,25 +387,34 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
   async function shareStory() {
     if (!shareFile) return;
-    const selectedFile = navigator.canShare?.({ files: [shareFile] })
-      ? shareFile
-      : shareImageFile && navigator.canShare?.({ files: [shareImageFile] })
-        ? shareImageFile
-        : null;
-    const data = {
-      ...(selectedFile ? { files: [selectedFile] } : {}),
-      title: "DOOMSDAY IS COMING",
-      text: "Minha contagem regressiva para Avengers: Doomsday",
-      url: window.location.href,
-    };
+    let selectedFile: File | null = null;
+    try {
+      if (navigator.canShare?.({ files: [shareFile] })) selectedFile = shareFile;
+      else if (shareImageFile && navigator.canShare?.({ files: [shareImageFile] })) selectedFile = shareImageFile;
+    } catch {
+      selectedFile = null;
+    }
 
     if (navigator.share) {
       try {
-        await navigator.share(data);
+        if (selectedFile) {
+          await navigator.share({ files: [selectedFile] });
+        } else {
+          await navigator.share({
+            title: "DOOMSDAY IS COMING",
+            text: "Minha contagem regressiva para Avengers: Doomsday",
+            url: window.location.href,
+          });
+        }
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
+        setShareError(error instanceof Error ? `${error.name}: ${error.message}` : "O sistema recusou o compartilhamento");
       }
+    } else {
+      setShareError(window.isSecureContext
+        ? "Este navegador não disponibilizou o menu nativo de compartilhamento."
+        : "O compartilhamento exige que o site seja aberto por HTTPS.");
     }
     setShareStatus("error");
   }
@@ -485,7 +497,12 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
                 <button className="share-dialog__action" onClick={shareStory}>COMPARTILHAR AGORA</button>
               </>
             )}
-            {shareStatus === "error" && <p>Não foi possível criar a mídia neste navegador. Tente novamente pelo Safari ou Chrome atualizado.</p>}
+            {shareStatus === "error" && (
+              <>
+                <p>Não foi possível abrir o compartilhamento neste aparelho.</p>
+                {shareError && <p className="share-dialog__detail">Detalhe: {shareError}</p>}
+              </>
+            )}
           </div>
         </section>
       )}
