@@ -222,9 +222,17 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
     const logoWidth = width * .64;
     const logoHeight = logoWidth * (logo.naturalHeight / logo.naturalWidth);
-    context.drawImage(logo, (width - logoWidth) / 2, height * .12, logoWidth, logoHeight);
+    const logoY = height * .12;
+    context.drawImage(logo, (width - logoWidth) / 2, logoY, logoWidth, logoHeight);
 
     context.textAlign = "center";
+    context.fillStyle = "rgba(226,255,231,.9)";
+    context.shadowColor = "rgba(67,255,112,.55)";
+    context.shadowBlur = 12;
+    context.font = "800 16px 'Avenir Doomsday', Arial";
+    context.letterSpacing = "3px";
+    context.fillText("@devpedro.js", width / 2, logoY + logoHeight + 18);
+
     context.fillStyle = "#fff";
     context.shadowColor = "rgba(0,0,0,.9)";
     context.shadowBlur = 18;
