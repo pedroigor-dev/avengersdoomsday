@@ -19,6 +19,30 @@ interface StorySnapshot {
   seconds: number;
 }
 
+interface HeroArtwork {
+  src: string;
+  side?: "left" | "right";
+  group?: boolean;
+}
+
+const heroArtworks: HeroArtwork[] = [
+  { src: "/share-heroes/endgame-12.jpg", side: "right" },
+  { src: "/share-heroes/endgame-3.jpg", side: "right" },
+  { src: "/share-heroes/endgame-13.jpg", side: "right" },
+  { src: "/share-heroes/fantastic-four.jpg", group: true },
+  { src: "/share-heroes/endgame-11.jpg", side: "right" },
+  { src: "/share-heroes/endgame-4.jpg", side: "right" },
+  { src: "/share-heroes/endgame-1.jpg", side: "left" },
+  { src: "/share-heroes/endgame-7.jpg", side: "right" },
+  { src: "/share-heroes/endgame-2.jpg", side: "right" },
+  { src: "/share-heroes/endgame-3.jpg", side: "left" },
+  { src: "/share-heroes/endgame-8.jpg", side: "left" },
+  { src: "/share-heroes/endgame-1.jpg", side: "right" },
+  { src: "/share-heroes/endgame-15.jpg", side: "right" },
+  { src: "/share-heroes/endgame-7.jpg", side: "left" },
+  { src: "/share-heroes/endgame-12.jpg", side: "left" },
+];
+
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const time = useCountdown(targetDate);
   const introRef = useRef<HTMLVideoElement>(null);
@@ -29,6 +53,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const audioFadeFrame = useRef<number | null>(null);
   const previousSecond = useRef(time.seconds);
   const tickCycle = useRef(0);
+  const previousHero = useRef(-1);
   const [introFinished, setIntroFinished] = useState(false);
   const [muted, setMuted] = useState(true);
   const [trailerVisible, setTrailerVisible] = useState(false);
@@ -192,6 +217,8 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     canvas: HTMLCanvasElement,
     video: HTMLVideoElement,
     logo: HTMLImageElement,
+    hero: HTMLImageElement,
+    heroArtwork: HeroArtwork,
     snapshot: StorySnapshot,
   ) {
     const { width, height } = canvas;
@@ -211,6 +238,29 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       width,
       height,
     );
+
+    context.save();
+    context.filter = "grayscale(.65) sepia(.22) hue-rotate(72deg) saturate(.78) contrast(1.18)";
+    context.globalAlpha = .72;
+    context.globalCompositeOperation = "screen";
+    if (heroArtwork.group) {
+      const heroHeight = width * (hero.naturalHeight / hero.naturalWidth);
+      context.drawImage(hero, 0, height * .28, width, heroHeight);
+    } else {
+      const halfWidth = hero.naturalWidth / 2;
+      const storyCropWidth = Math.min(halfWidth, hero.naturalHeight * (width / height));
+      const halfStart = heroArtwork.side === "right" ? halfWidth : 0;
+      const sourceX = halfStart + (halfWidth - storyCropWidth) / 2;
+      context.drawImage(hero, sourceX, 0, storyCropWidth, hero.naturalHeight, 0, 0, width, height);
+    }
+    context.restore();
+
+    const emeraldHaze = context.createRadialGradient(width * .5, height * .48, 20, width * .5, height * .48, height * .62);
+    emeraldHaze.addColorStop(0, "rgba(73,170,92,.08)");
+    emeraldHaze.addColorStop(.58, "rgba(2,25,13,.22)");
+    emeraldHaze.addColorStop(1, "rgba(0,0,0,.68)");
+    context.fillStyle = emeraldHaze;
+    context.fillRect(0, 0, width, height);
 
     const shade = context.createLinearGradient(0, 0, 0, height);
     shade.addColorStop(0, "rgba(0,0,0,.5)");
@@ -306,13 +356,21 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         await logo.decode();
       }
 
+      let heroIndex = Math.floor(Math.random() * heroArtworks.length);
+      if (heroIndex === previousHero.current) heroIndex = (heroIndex + 1) % heroArtworks.length;
+      previousHero.current = heroIndex;
+      const heroArtwork = heroArtworks[heroIndex];
+      const hero = new window.Image();
+      hero.src = heroArtwork.src;
+      await hero.decode();
+
       const canvas = document.createElement("canvas");
       canvas.width = 720;
       canvas.height = 1280;
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Canvas unavailable");
 
-      drawStoryFrame(context, canvas, video, logo, snapshot);
+      drawStoryFrame(context, canvas, video, logo, hero, heroArtwork, snapshot);
       const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!imageBlob) throw new Error("Image generation failed");
       const imageFile = new File([imageBlob], "doomsday-countdown.png", { type: "image/png" });
