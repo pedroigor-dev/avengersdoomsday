@@ -389,7 +389,8 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     if (!shareFile) return;
     let selectedFile: File | null = null;
     try {
-      if (navigator.canShare?.({ files: [shareFile] })) selectedFile = shareFile;
+      const isCompatibleVideo = shareFile.type.startsWith("video/mp4");
+      if (isCompatibleVideo && navigator.canShare?.({ files: [shareFile] })) selectedFile = shareFile;
       else if (shareImageFile && navigator.canShare?.({ files: [shareImageFile] })) selectedFile = shareImageFile;
     } catch {
       selectedFile = null;

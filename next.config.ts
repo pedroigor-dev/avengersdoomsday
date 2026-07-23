@@ -1,5 +1,19 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "web-share=(self)",
+          },
+        ],
+      },
+    ];
+  },
+};
 
 export default nextConfig;
