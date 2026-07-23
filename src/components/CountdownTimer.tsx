@@ -22,34 +22,81 @@ interface StorySnapshot {
 interface HeroArtwork {
   src: string;
   side?: "left" | "right";
-  group?: boolean;
   single?: boolean;
   focus?: number;
+  phrase: string;
 }
 
 const heroArtworks: HeroArtwork[] = [
-  { src: "/share-heroes/endgame-12.jpg", side: "right" },
-  { src: "/share-heroes/endgame-3.jpg", side: "right" },
-  { src: "/share-heroes/endgame-13.jpg", side: "right" },
-  { src: "/share-heroes/fantastic-four.jpg", group: true },
-  { src: "/share-heroes/endgame-11.jpg", side: "right" },
-  { src: "/share-heroes/endgame-4.jpg", side: "right" },
-  { src: "/share-heroes/endgame-1.jpg", side: "left" },
-  { src: "/share-heroes/endgame-2.jpg", side: "right" },
-  { src: "/share-heroes/endgame-3.jpg", side: "left" },
-  { src: "/share-heroes/endgame-8.jpg", side: "left" },
-  { src: "/share-heroes/endgame-1.jpg", side: "right" },
-  { src: "/share-heroes/endgame-15.jpg", side: "right" },
-  { src: "/share-heroes/endgame-7.jpg", side: "left" },
-  { src: "/share-heroes/endgame-12.jpg", side: "left" },
-  { src: "/share-heroes/cyclops.jpg", single: true },
-  { src: "/share-heroes/professor-x.jpg", single: true },
-  { src: "/share-heroes/magneto.jpg", single: true },
-  { src: "/share-heroes/gambit.jpg", single: true },
-  { src: "/share-heroes/mystique.jpg", single: true },
-  { src: "/share-heroes/ms-marvel.jpg", single: true },
-  { src: "/share-heroes/doctor-doom.jpg", single: true, focus: .75 },
+  { src: "/share-heroes/endgame-12.jpg", side: "right", phrase: "NINGUÉM ESCAPA DA CONTAGEM" },
+  { src: "/share-heroes/endgame-3.jpg", side: "right", phrase: "QUANDO O RELÓGIO PARAR, CORRA" },
+  { src: "/share-heroes/endgame-13.jpg", side: "right", phrase: "O CÉU NÃO VAI RESPONDER" },
+  { src: "/share-heroes/fantastic-reed.jpg", single: true, focus: .78, phrase: "NEM TODA EQUAÇÃO TEM SAÍDA" },
+  { src: "/share-heroes/fantastic-sue.jpg", single: true, phrase: "O INVISÍVEL JÁ ESTÁ ENTRE NÓS" },
+  { src: "/share-heroes/fantastic-johnny.jpg", single: true, phrase: "ATÉ AS ESTRELAS VÃO QUEIMAR" },
+  { src: "/share-heroes/fantastic-ben.jpg", single: true, phrase: "A ÚLTIMA PEDRA VAI CAIR" },
+  { src: "/share-heroes/endgame-11.jpg", side: "right", phrase: "ALGO ACORDOU ENTRE OS MUNDOS" },
+  { src: "/share-heroes/endgame-4.jpg", side: "right", phrase: "ESTA NOITE SERÁ A ÚLTIMA" },
+  { src: "/share-heroes/endgame-1.jpg", side: "left", phrase: "O FUTURO TERMINA AQUI" },
+  { src: "/share-heroes/endgame-2.jpg", side: "right", phrase: "VOCÊ OUVIU O ÚLTIMO SINAL?" },
+  { src: "/share-heroes/endgame-3.jpg", side: "left", phrase: "AS PORTAS JÁ ESTÃO ABERTAS" },
+  { src: "/share-heroes/endgame-8.jpg", side: "left", phrase: "O FIM APRENDEU SEU NOME" },
+  { src: "/share-heroes/endgame-1.jpg", side: "right", phrase: "TODO SACRIFÍCIO SERÁ ESQUECIDO" },
+  { src: "/share-heroes/endgame-15.jpg", side: "right", phrase: "NÃO EXISTE VOLTA PARA CASA" },
+  { src: "/share-heroes/endgame-7.jpg", side: "left", phrase: "O SILÊNCIO CHEGA PRIMEIRO" },
+  { src: "/share-heroes/endgame-12.jpg", side: "left", phrase: "RESTARÃO APENAS CINZAS" },
+  { src: "/share-heroes/cyclops.jpg", single: true, phrase: "NÃO OLHE PARA A LUZ" },
+  { src: "/share-heroes/professor-x.jpg", single: true, phrase: "ELE JÁ ESTÁ NA SUA MENTE" },
+  { src: "/share-heroes/magneto.jpg", single: true, phrase: "O MUNDO VAI SE CURVAR" },
+  { src: "/share-heroes/gambit.jpg", single: true, phrase: "A ÚLTIMA CARTA FOI LANÇADA" },
+  { src: "/share-heroes/mystique.jpg", single: true, phrase: "NÃO CONFIE NO ROSTO À SUA FRENTE" },
+  { src: "/share-heroes/ms-marvel.jpg", single: true, phrase: "OS HERÓIS TAMBÉM SENTEM MEDO" },
+  { src: "/share-heroes/doctor-doom.jpg", single: true, focus: .75, phrase: "O DESTINO SEMPRE CHEGA" },
 ];
+
+function drawDistressedPhrase(
+  context: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  baselineY: number,
+) {
+  const layer = document.createElement("canvas");
+  layer.width = 680;
+  layer.height = 64;
+  const layerContext = layer.getContext("2d");
+  if (!layerContext) return;
+
+  layerContext.textAlign = "center";
+  layerContext.textBaseline = "middle";
+  layerContext.font = "900 21px 'Avenir Doomsday', Arial";
+  layerContext.letterSpacing = "3px";
+  layerContext.fillStyle = "rgba(235,255,238,.94)";
+  layerContext.fillText(text, layer.width / 2, layer.height / 2, 640);
+
+  let seed = Array.from(text).reduce((value, character) => value + character.charCodeAt(0), 17);
+  const random = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+
+  layerContext.globalCompositeOperation = "destination-out";
+  for (let index = 0; index < 14; index += 1) {
+    const scratchX = 24 + random() * 620;
+    const scratchY = 18 + random() * 29;
+    const scratchWidth = 8 + random() * 42;
+    const scratchHeight = .7 + random() * 1.8;
+    layerContext.fillRect(scratchX, scratchY, scratchWidth, scratchHeight);
+  }
+
+  context.save();
+  context.shadowColor = "rgba(75,255,120,.5)";
+  context.shadowBlur = 14;
+  context.globalAlpha = .3;
+  context.drawImage(layer, centerX - layer.width / 2 + 2, baselineY - layer.height / 2 + 2);
+  context.globalAlpha = 1;
+  context.drawImage(layer, centerX - layer.width / 2, baselineY - layer.height / 2);
+  context.restore();
+}
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const time = useCountdown(targetDate);
@@ -259,9 +306,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     let artworkWidth = width;
     let artworkHeight = width * (hero.naturalHeight / hero.naturalWidth);
 
-    if (heroArtwork.group) {
-      heroContext.drawImage(hero, artworkX, artworkY, artworkWidth, artworkHeight);
-    } else if (heroArtwork.single) {
+    if (heroArtwork.single) {
       artworkWidth = width * .82;
       artworkHeight = height * .4;
       artworkX = (width - artworkWidth) / 2;
@@ -400,6 +445,9 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     const startX = width * .145;
     const gap = width * .1775;
     labels.forEach((label, index) => context.fillText(label, startX + gap * index, height * .685));
+
+    context.shadowBlur = 0;
+    drawDistressedPhrase(context, heroArtwork.phrase, width / 2, height * .745);
 
     context.font = "400 15px Arial";
     context.letterSpacing = "1px";
