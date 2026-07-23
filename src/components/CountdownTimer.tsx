@@ -23,6 +23,7 @@ interface HeroArtwork {
   src: string;
   side?: "left" | "right";
   group?: boolean;
+  single?: boolean;
 }
 
 const heroArtworks: HeroArtwork[] = [
@@ -41,6 +42,12 @@ const heroArtworks: HeroArtwork[] = [
   { src: "/share-heroes/endgame-15.jpg", side: "right" },
   { src: "/share-heroes/endgame-7.jpg", side: "left" },
   { src: "/share-heroes/endgame-12.jpg", side: "left" },
+  { src: "/share-heroes/cyclops.jpg", single: true },
+  { src: "/share-heroes/professor-x.jpg", single: true },
+  { src: "/share-heroes/magneto.jpg", single: true },
+  { src: "/share-heroes/gambit.jpg", single: true },
+  { src: "/share-heroes/mystique.jpg", single: true },
+  { src: "/share-heroes/ms-marvel.jpg", single: true },
 ];
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
@@ -253,6 +260,38 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
     if (heroArtwork.group) {
       heroContext.drawImage(hero, artworkX, artworkY, artworkWidth, artworkHeight);
+    } else if (heroArtwork.single) {
+      artworkWidth = width * .82;
+      artworkHeight = height * .4;
+      artworkX = (width - artworkWidth) / 2;
+      artworkY = height * .17;
+
+      const sourceRatio = hero.naturalWidth / hero.naturalHeight;
+      const targetRatio = artworkWidth / artworkHeight;
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = hero.naturalWidth;
+      let sourceHeight = hero.naturalHeight;
+
+      if (sourceRatio > targetRatio) {
+        sourceWidth = hero.naturalHeight * targetRatio;
+        sourceX = (hero.naturalWidth - sourceWidth) / 2;
+      } else {
+        sourceHeight = hero.naturalWidth / targetRatio;
+        sourceY = (hero.naturalHeight - sourceHeight) / 2;
+      }
+
+      heroContext.drawImage(
+        hero,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        artworkX,
+        artworkY,
+        artworkWidth,
+        artworkHeight,
+      );
     } else {
       const halfWidth = hero.naturalWidth / 2;
       const portraitHeight = hero.naturalHeight * .82;
