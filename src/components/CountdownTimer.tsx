@@ -249,10 +249,22 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     } else {
       const halfWidth = hero.naturalWidth / 2;
       const portraitHeight = hero.naturalHeight * .82;
-      const storyCropWidth = Math.min(halfWidth, portraitHeight * (width / height));
       const halfStart = heroArtwork.side === "right" ? halfWidth : 0;
-      const sourceX = halfStart + (halfWidth - storyCropWidth) / 2;
-      context.drawImage(hero, sourceX, 0, storyCropWidth, portraitHeight, 0, 0, width, height);
+      const destinationWidth = width * .76;
+      const destinationHeight = destinationWidth * (portraitHeight / halfWidth);
+      const destinationX = (width - destinationWidth) / 2;
+      const destinationY = height * .19;
+      context.drawImage(
+        hero,
+        halfStart,
+        0,
+        halfWidth,
+        portraitHeight,
+        destinationX,
+        destinationY,
+        destinationWidth,
+        destinationHeight,
+      );
     }
     context.restore();
 
