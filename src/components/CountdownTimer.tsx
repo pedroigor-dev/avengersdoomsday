@@ -24,6 +24,7 @@ interface HeroArtwork {
   side?: "left" | "right";
   group?: boolean;
   single?: boolean;
+  focus?: number;
 }
 
 const heroArtworks: HeroArtwork[] = [
@@ -34,7 +35,6 @@ const heroArtworks: HeroArtwork[] = [
   { src: "/share-heroes/endgame-11.jpg", side: "right" },
   { src: "/share-heroes/endgame-4.jpg", side: "right" },
   { src: "/share-heroes/endgame-1.jpg", side: "left" },
-  { src: "/share-heroes/endgame-7.jpg", side: "right" },
   { src: "/share-heroes/endgame-2.jpg", side: "right" },
   { src: "/share-heroes/endgame-3.jpg", side: "left" },
   { src: "/share-heroes/endgame-8.jpg", side: "left" },
@@ -48,6 +48,7 @@ const heroArtworks: HeroArtwork[] = [
   { src: "/share-heroes/gambit.jpg", single: true },
   { src: "/share-heroes/mystique.jpg", single: true },
   { src: "/share-heroes/ms-marvel.jpg", single: true },
+  { src: "/share-heroes/doctor-doom.jpg", single: true, focus: .75 },
 ];
 
 export function CountdownTimer({ targetDate }: CountdownTimerProps) {
@@ -275,7 +276,8 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
 
       if (sourceRatio > targetRatio) {
         sourceWidth = hero.naturalHeight * targetRatio;
-        sourceX = (hero.naturalWidth - sourceWidth) / 2;
+        const focus = Math.min(Math.max(heroArtwork.focus ?? .5, 0), 1);
+        sourceX = (hero.naturalWidth - sourceWidth) * focus;
       } else {
         sourceHeight = hero.naturalWidth / targetRatio;
         sourceY = (hero.naturalHeight - sourceHeight) / 2;
