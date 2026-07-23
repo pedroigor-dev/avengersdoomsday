@@ -239,34 +239,78 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       height,
     );
 
-    context.save();
-    context.filter = "grayscale(.65) sepia(.22) hue-rotate(72deg) saturate(.78) contrast(1.18)";
-    context.globalAlpha = .72;
-    context.globalCompositeOperation = "screen";
+    const heroLayer = document.createElement("canvas");
+    heroLayer.width = width;
+    heroLayer.height = height;
+    const heroContext = heroLayer.getContext("2d");
+    if (!heroContext) throw new Error("Hero canvas unavailable");
+
+    heroContext.filter = "grayscale(.65) sepia(.22) hue-rotate(72deg) saturate(.78) contrast(1.18)";
+    let artworkX = 0;
+    let artworkY = height * .28;
+    let artworkWidth = width;
+    let artworkHeight = width * (hero.naturalHeight / hero.naturalWidth);
+
     if (heroArtwork.group) {
-      const heroHeight = width * (hero.naturalHeight / hero.naturalWidth);
-      context.drawImage(hero, 0, height * .28, width, heroHeight);
+      heroContext.drawImage(hero, artworkX, artworkY, artworkWidth, artworkHeight);
     } else {
       const halfWidth = hero.naturalWidth / 2;
       const portraitHeight = hero.naturalHeight * .82;
       const halfStart = heroArtwork.side === "right" ? halfWidth : 0;
-      const destinationWidth = width * .76;
-      const destinationHeight = destinationWidth * (portraitHeight / halfWidth);
-      const destinationX = (width - destinationWidth) / 2;
-      const destinationY = height * .19;
-      context.drawImage(
+      artworkWidth = width * .76;
+      artworkHeight = artworkWidth * (portraitHeight / halfWidth);
+      artworkX = (width - artworkWidth) / 2;
+      artworkY = height * .19;
+      heroContext.drawImage(
         hero,
         halfStart,
         0,
         halfWidth,
         portraitHeight,
-        destinationX,
-        destinationY,
-        destinationWidth,
-        destinationHeight,
+        artworkX,
+        artworkY,
+        artworkWidth,
+        artworkHeight,
       );
     }
+
+    heroContext.filter = "none";
+    heroContext.globalCompositeOperation = "destination-in";
+    const horizontalFeather = heroContext.createLinearGradient(artworkX, 0, artworkX + artworkWidth, 0);
+    horizontalFeather.addColorStop(0, "rgba(0,0,0,0)");
+    horizontalFeather.addColorStop(.14, "rgba(0,0,0,1)");
+    horizontalFeather.addColorStop(.86, "rgba(0,0,0,1)");
+    horizontalFeather.addColorStop(1, "rgba(0,0,0,0)");
+    heroContext.fillStyle = horizontalFeather;
+    heroContext.fillRect(artworkX, artworkY, artworkWidth, artworkHeight);
+
+    const verticalFeather = heroContext.createLinearGradient(0, artworkY, 0, artworkY + artworkHeight);
+    verticalFeather.addColorStop(0, "rgba(0,0,0,0)");
+    verticalFeather.addColorStop(.1, "rgba(0,0,0,1)");
+    verticalFeather.addColorStop(.72, "rgba(0,0,0,.94)");
+    verticalFeather.addColorStop(1, "rgba(0,0,0,0)");
+    heroContext.fillStyle = verticalFeather;
+    heroContext.fillRect(artworkX, artworkY, artworkWidth, artworkHeight);
+
+    context.save();
+    context.globalAlpha = .76;
+    context.globalCompositeOperation = "screen";
+    context.drawImage(heroLayer, 0, 0);
     context.restore();
+
+    const edgeMist = context.createRadialGradient(
+      width * .5,
+      artworkY + artworkHeight * .5,
+      artworkWidth * .22,
+      width * .5,
+      artworkY + artworkHeight * .5,
+      artworkWidth * .72,
+    );
+    edgeMist.addColorStop(0, "rgba(18,68,37,0)");
+    edgeMist.addColorStop(.68, "rgba(8,39,22,.12)");
+    edgeMist.addColorStop(1, "rgba(0,12,7,.54)");
+    context.fillStyle = edgeMist;
+    context.fillRect(0, Math.max(0, artworkY - 80), width, Math.min(height, artworkHeight + 160));
 
     const emeraldHaze = context.createRadialGradient(width * .5, height * .48, 20, width * .5, height * .48, height * .62);
     emeraldHaze.addColorStop(0, "rgba(73,170,92,.08)");
