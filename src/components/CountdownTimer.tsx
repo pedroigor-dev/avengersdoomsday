@@ -37,7 +37,6 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [signalGlitch, setSignalGlitch] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
-  const [shareFile, setShareFile] = useState<File | null>(null);
   const [shareImageFile, setShareImageFile] = useState<File | null>(null);
   const [shareError, setShareError] = useState("");
 
@@ -257,7 +256,6 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     try {
       setShareStatus("generating");
       setShareError("");
-      setShareFile(null);
       setShareImageFile(null);
       await document.fonts.ready;
 
@@ -310,61 +308,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       const imageBlob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!imageBlob) throw new Error("Image generation failed");
       const imageFile = new File([imageBlob], "doomsday-countdown.png", { type: "image/png" });
-      setShareFile(imageFile);
       setShareImageFile(imageFile);
-
-      const captureStream = canvas.captureStream?.bind(canvas);
-      const canRecord = typeof MediaRecorder !== "undefined" && Boolean(captureStream);
-
-      if (canRecord) {
-        try {
-          const formats = [
-            "video/mp4;codecs=avc1.42E01E",
-            "video/mp4",
-            "video/webm;codecs=vp9",
-            "video/webm",
-          ];
-          const mimeType = formats.find((format) => MediaRecorder.isTypeSupported(format));
-
-          if (mimeType) {
-            const stream = canvas.captureStream(24);
-            const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
-            const chunks: BlobPart[] = [];
-            let animationFrame = 0;
-
-            recorder.ondataavailable = (event) => {
-              if (event.data.size) chunks.push(event.data);
-            };
-
-            const stopped = new Promise<void>((resolve) => {
-              recorder.onstop = () => resolve();
-              recorder.onerror = () => resolve();
-            });
-
-            const render = () => {
-              drawStoryFrame(context, canvas, video, logo, snapshot);
-              animationFrame = window.requestAnimationFrame(render);
-            };
-
-            recorder.start(250);
-            render();
-            window.setTimeout(() => {
-              if (recorder.state !== "inactive") recorder.stop();
-            }, 5000);
-            await stopped;
-            window.cancelAnimationFrame(animationFrame);
-            stream.getTracks().forEach((track) => track.stop());
-
-            const extension = mimeType.includes("mp4") ? "mp4" : "webm";
-            const file = new File(chunks, `doomsday-countdown.${extension}`, { type: mimeType });
-            if (file.size > 0) {
-              setShareFile(file);
-            }
-          }
-        } catch {
-          setShareFile(imageFile);
-        }
-      }
 
       setShareStatus("ready");
     } catch (error) {
@@ -395,7 +339,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   }
 
   async function shareStory() {
-    if (!shareFile) return;
+    if (!shareImageFile) return;
     if (window.self !== window.top) {
       setShareError("A página está dentro de um preview que bloqueia compartilhamentos. Abra avengersdoomsdaydev.vercel.app diretamente no Chrome.");
       setShareStatus("error");
@@ -403,9 +347,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     }
     let selectedFile: File | null = null;
     try {
-      const isCompatibleVideo = shareFile.type.startsWith("video/mp4");
-      if (isCompatibleVideo && navigator.canShare?.({ files: [shareFile] })) selectedFile = shareFile;
-      else if (shareImageFile && navigator.canShare?.({ files: [shareImageFile] })) selectedFile = shareImageFile;
+      if (navigator.canShare?.({ files: [shareImageFile] })) selectedFile = shareImageFile;
     } catch {
       selectedFile = null;
     }
