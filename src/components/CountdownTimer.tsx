@@ -248,10 +248,11 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       context.drawImage(hero, 0, height * .28, width, heroHeight);
     } else {
       const halfWidth = hero.naturalWidth / 2;
-      const storyCropWidth = Math.min(halfWidth, hero.naturalHeight * (width / height));
+      const portraitHeight = hero.naturalHeight * .82;
+      const storyCropWidth = Math.min(halfWidth, portraitHeight * (width / height));
       const halfStart = heroArtwork.side === "right" ? halfWidth : 0;
       const sourceX = halfStart + (halfWidth - storyCropWidth) / 2;
-      context.drawImage(hero, sourceX, 0, storyCropWidth, hero.naturalHeight, 0, 0, width, height);
+      context.drawImage(hero, sourceX, 0, storyCropWidth, portraitHeight, 0, 0, width, height);
     }
     context.restore();
 
