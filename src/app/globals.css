@@ -29,9 +29,23 @@ button, a { font: inherit; }
   height: 100dvh;
   min-height: 100svh;
   overflow: hidden;
-  background: #000;
+  background:
+    radial-gradient(ellipse at 50% 0, #203d22 0, #0b1c10 36%, #020503 70%),
+    #000;
   color: #fff;
   font-family: "Avenir Doomsday", Arial, sans-serif;
+}
+.doomsday::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 100%;
+  height: clamp(10rem, 24vh, 14rem);
+  background: linear-gradient(180deg, #07140b 0 28%, rgba(7,20,11,.96) 38%, rgba(5,17,10,.62) 62%, transparent 100%);
+  pointer-events: none;
 }
 
 .doomsday__video {
@@ -50,9 +64,10 @@ button, a { font: inherit; }
 .doomsday__video.is-hidden { opacity: 0; pointer-events: none; }
 
 @media (orientation: landscape) {
+  .doomsday::before { display: block; }
   .doomsday__video {
     --video-base-transform: translateX(-50%);
-    top: 0;
+    top: clamp(2.25rem, 6vh, 4.5rem);
     width: 100%;
     height: auto;
   }
