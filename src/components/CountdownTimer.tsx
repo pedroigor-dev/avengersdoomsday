@@ -10,6 +10,7 @@ interface CountdownTimerProps {
 
 type IntroPhase = "loading" | "revealing" | "done";
 type ShareStatus = "idle" | "generating" | "ready" | "error";
+type SceneTransition = "idle" | "closing" | "opening";
 
 interface StorySnapshot {
   months: number;
@@ -27,36 +28,69 @@ interface HeroArtwork {
   phrase: string;
 }
 
+interface ClockScene {
+  name: string;
+  src?: string;
+}
+
 const heroArtworks: HeroArtwork[] = [
-  { src: "/share-cinematic/thor.png", single: true, phrase: "NEM OS DEUSES OUVIRAM O SINAL" },
-  { src: "/share-cinematic/captain-america.png", single: true, phrase: "O CÉU NÃO VAI RESPONDER" },
-  { src: "/share-cinematic/steve-rogers.png", single: true, phrase: "O PASSADO VOLTOU PARA COBRAR" },
-  { src: "/share-cinematic/winter-soldier.png", single: true, phrase: "ALGUMAS GUERRAS NUNCA TERMINAM" },
-  { src: "/share-cinematic/shuri.png", single: true, phrase: "NENHUMA TECNOLOGIA PREVIU O FIM" },
-  { src: "/share-cinematic/ant-man.png", single: true, phrase: "ATÉ O MENOR MUNDO VAI CAIR" },
-  { src: "/share-cinematic/us-agent.png", single: true, phrase: "NÃO EXISTEM ORDENS PARA O FIM" },
-  { src: "/share-cinematic/namor.png", single: true, phrase: "O ABISMO TAMBÉM SENTIU MEDO" },
-  { src: "/share-cinematic/thing.png", single: true, phrase: "A ÚLTIMA PEDRA VAI CAIR" },
-  { src: "/share-cinematic/shang-chi.png", single: true, phrase: "OS ANÉIS OUVIRAM O CHAMADO" },
-  { src: "/share-cinematic/yelena.png", single: true, phrase: "NINGUÉM SAI DESTA MISSÃO" },
-  { src: "/share-cinematic/beast.png", single: true, phrase: "A CIÊNCIA NÃO TEM MAIS RESPOSTAS" },
-  { src: "/share-cinematic/sentry.png", single: true, phrase: "A LUZ TAMBÉM PROJETA MONSTROS" },
-  { src: "/share-cinematic/falcon.png", single: true, phrase: "O ÚLTIMO VOO JÁ COMEÇOU" },
-  { src: "/share-cinematic/human-torch.png", single: true, phrase: "ATÉ AS ESTRELAS VÃO QUEIMAR" },
-  { src: "/share-cinematic/red-guardian.png", single: true, phrase: "NÃO HAVERÁ UMA ÚLTIMA VITÓRIA" },
-  { src: "/share-cinematic/mbaku.png", single: true, phrase: "AS MONTANHAS TAMBÉM SE CURVAM" },
-  { src: "/share-cinematic/ghost.png", single: true, phrase: "O INVISÍVEL JÁ ESTÁ ENTRE NÓS" },
-  { src: "/share-cinematic/professor-x.png", single: true, phrase: "ELE JÁ ESTÁ NA SUA MENTE" },
-  { src: "/share-cinematic/magneto.png", single: true, phrase: "O MUNDO VAI SE CURVAR" },
-  { src: "/share-cinematic/nightcrawler.png", single: true, phrase: "NÃO HÁ LUGAR PARA ONDE FUGIR" },
-  { src: "/share-cinematic/cyclops.png", single: true, phrase: "NÃO OLHE PARA A LUZ" },
-  { src: "/share-cinematic/gambit.png", single: true, phrase: "A ÚLTIMA CARTA FOI LANÇADA" },
-  { src: "/share-cinematic/mister-fantastic.png", single: true, phrase: "NEM TODA EQUAÇÃO TEM SAÍDA" },
-  { src: "/share-cinematic/invisible-woman.png", single: true, phrase: "O SILÊNCIO CHEGA PRIMEIRO" },
-  { src: "/share-cinematic/doctor-doom.png", single: true, phrase: "O DESTINO SEMPRE CHEGA" },
-  { src: "/share-cinematic/witch-green.png", single: true, phrase: "A TERRA SE LEMBRA DO NOME DELE" },
-  { src: "/share-cinematic/witch-orange.png", single: true, phrase: "A PROTEÇÃO SE TORNOU UMA PRISÃO" },
-  { src: "/share-cinematic/witch-purple.png", single: true, phrase: "A MAGIA ABRIU A PORTA ERRADA" },
+  { src: "/share-heroes/endgame-12.jpg", side: "right", phrase: "NINGUÉM ESCAPA DA CONTAGEM" },
+  { src: "/share-heroes/endgame-3.jpg", side: "right", phrase: "QUANDO O RELÓGIO PARAR, CORRA" },
+  { src: "/share-heroes/endgame-13.jpg", side: "right", phrase: "O CÉU NÃO VAI RESPONDER" },
+  { src: "/share-heroes/fantastic-reed.jpg", single: true, focus: .78, phrase: "NEM TODA EQUAÇÃO TEM SAÍDA" },
+  { src: "/share-heroes/fantastic-sue.jpg", single: true, phrase: "O INVISÍVEL JÁ ESTÁ ENTRE NÓS" },
+  { src: "/share-heroes/fantastic-johnny.jpg", single: true, phrase: "ATÉ AS ESTRELAS VÃO QUEIMAR" },
+  { src: "/share-heroes/fantastic-ben.jpg", single: true, phrase: "A ÚLTIMA PEDRA VAI CAIR" },
+  { src: "/share-heroes/endgame-11.jpg", side: "right", phrase: "ALGO ACORDOU ENTRE OS MUNDOS" },
+  { src: "/share-heroes/endgame-4.jpg", side: "right", phrase: "ESTA NOITE SERÁ A ÚLTIMA" },
+  { src: "/share-heroes/endgame-1.jpg", side: "left", phrase: "O FUTURO TERMINA AQUI" },
+  { src: "/share-heroes/endgame-2.jpg", side: "right", phrase: "VOCÊ OUVIU O ÚLTIMO SINAL?" },
+  { src: "/share-heroes/endgame-3.jpg", side: "left", phrase: "AS PORTAS JÁ ESTÃO ABERTAS" },
+  { src: "/share-heroes/endgame-8.jpg", side: "left", phrase: "O FIM APRENDEU SEU NOME" },
+  { src: "/share-heroes/endgame-1.jpg", side: "right", phrase: "TODO SACRIFÍCIO SERÁ ESQUECIDO" },
+  { src: "/share-heroes/endgame-15.jpg", side: "right", phrase: "NÃO EXISTE VOLTA PARA CASA" },
+  { src: "/share-heroes/endgame-7.jpg", side: "left", phrase: "O SILÊNCIO CHEGA PRIMEIRO" },
+  { src: "/share-heroes/endgame-12.jpg", side: "left", phrase: "RESTARÃO APENAS CINZAS" },
+  { src: "/share-heroes/cyclops.jpg", single: true, phrase: "NÃO OLHE PARA A LUZ" },
+  { src: "/share-heroes/professor-x.jpg", single: true, phrase: "ELE JÁ ESTÁ NA SUA MENTE" },
+  { src: "/share-heroes/magneto.jpg", single: true, phrase: "O MUNDO VAI SE CURVAR" },
+  { src: "/share-heroes/gambit.jpg", single: true, phrase: "A ÚLTIMA CARTA FOI LANÇADA" },
+  { src: "/share-heroes/mystique.jpg", single: true, phrase: "NÃO CONFIE NO ROSTO À SUA FRENTE" },
+  { src: "/share-heroes/ms-marvel.jpg", single: true, phrase: "OS HERÓIS TAMBÉM SENTEM MEDO" },
+  { src: "/share-heroes/doctor-doom.jpg", single: true, focus: .75, phrase: "O DESTINO SEMPRE CHEGA" },
+];
+
+const clockScenes: ClockScene[] = [
+  { name: "DOCTOR DOOM" },
+  { name: "THOR", src: "/share-cinematic/thor.png" },
+  { name: "CAPTAIN AMERICA", src: "/share-cinematic/captain-america.png" },
+  { name: "STEVE ROGERS", src: "/share-cinematic/steve-rogers.png" },
+  { name: "WINTER SOLDIER", src: "/share-cinematic/winter-soldier.png" },
+  { name: "SHURI", src: "/share-cinematic/shuri.png" },
+  { name: "ANT-MAN", src: "/share-cinematic/ant-man.png" },
+  { name: "U.S. AGENT", src: "/share-cinematic/us-agent.png" },
+  { name: "NAMOR", src: "/share-cinematic/namor.png" },
+  { name: "THE THING", src: "/share-cinematic/thing.png" },
+  { name: "SHANG-CHI", src: "/share-cinematic/shang-chi.png" },
+  { name: "YELENA", src: "/share-cinematic/yelena.png" },
+  { name: "BEAST", src: "/share-cinematic/beast.png" },
+  { name: "SENTRY", src: "/share-cinematic/sentry.png" },
+  { name: "FALCON", src: "/share-cinematic/falcon.png" },
+  { name: "HUMAN TORCH", src: "/share-cinematic/human-torch.png" },
+  { name: "RED GUARDIAN", src: "/share-cinematic/red-guardian.png" },
+  { name: "M'BAKU", src: "/share-cinematic/mbaku.png" },
+  { name: "GHOST", src: "/share-cinematic/ghost.png" },
+  { name: "PROFESSOR X", src: "/share-cinematic/professor-x.png" },
+  { name: "MAGNETO", src: "/share-cinematic/magneto.png" },
+  { name: "NIGHTCRAWLER", src: "/share-cinematic/nightcrawler.png" },
+  { name: "CYCLOPS", src: "/share-cinematic/cyclops.png" },
+  { name: "GAMBIT", src: "/share-cinematic/gambit.png" },
+  { name: "MISTER FANTASTIC", src: "/share-cinematic/mister-fantastic.png" },
+  { name: "INVISIBLE WOMAN", src: "/share-cinematic/invisible-woman.png" },
+  { name: "DOCTOR DOOM: SORCERER", src: "/share-cinematic/doctor-doom.png" },
+  { name: "LATVERIAN WITCH: GREEN", src: "/share-cinematic/witch-green.png" },
+  { name: "LATVERIAN WITCH: ORANGE", src: "/share-cinematic/witch-orange.png" },
+  { name: "LATVERIAN WITCH: PURPLE", src: "/share-cinematic/witch-purple.png" },
 ];
 
 function drawDistressedPhrase(
@@ -114,6 +148,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const previousSecond = useRef(time.seconds);
   const tickCycle = useRef(0);
   const previousHero = useRef(-1);
+  const sceneTimers = useRef<number[]>([]);
   const [introFinished, setIntroFinished] = useState(false);
   const [muted, setMuted] = useState(true);
   const [trailerVisible, setTrailerVisible] = useState(false);
@@ -124,6 +159,8 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   const [shareStatus, setShareStatus] = useState<ShareStatus>("idle");
   const [shareImageFile, setShareImageFile] = useState<File | null>(null);
   const [shareError, setShareError] = useState("");
+  const [currentScene, setCurrentScene] = useState(0);
+  const [sceneTransition, setSceneTransition] = useState<SceneTransition>("idle");
 
   function fadeSiteAudio(targetLevel: number, duration: number) {
     if (audioFadeFrame.current !== null) window.cancelAnimationFrame(audioFadeFrame.current);
@@ -167,6 +204,10 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       window.clearTimeout(revealTimer);
       if (finishTimer) window.clearTimeout(finishTimer);
     };
+  }, []);
+
+  useEffect(() => () => {
+    sceneTimers.current.forEach((timer) => window.clearTimeout(timer));
   }, []);
 
   useEffect(() => {
@@ -241,6 +282,18 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
   function finishIntro() {
     setIntroFinished(true);
     if (loopRef.current) void loopRef.current.play().catch(() => undefined);
+  }
+
+  function changeClockScene(direction: -1 | 1) {
+    if (sceneTransition !== "idle" || trailerVisible || introPhase !== "done") return;
+    setSceneTransition("closing");
+    const swapTimer = window.setTimeout(() => {
+      setCurrentScene((scene) => (scene + direction + clockScenes.length) % clockScenes.length);
+      setSceneTransition("opening");
+      const finishTimer = window.setTimeout(() => setSceneTransition("idle"), 900);
+      sceneTimers.current.push(finishTimer);
+    }, 620);
+    sceneTimers.current.push(swapTimer);
   }
 
   function restartAmbient() {
@@ -625,11 +678,14 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     setShareStatus("error");
   }
 
+  const activeScene = clockScenes[currentScene];
+  const videoSceneHidden = currentScene !== 0;
+
   return (
-    <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""} ${signalGlitch && introPhase === "done" && !trailerVisible ? "signal-glitch" : ""}`}>
+    <div className={`doomsday is-ready scene-transition-${sceneTransition} ${trailerVisible ? "trailer-active" : ""} ${signalGlitch && introPhase === "done" && !trailerVisible ? "signal-glitch" : ""}`}>
       <video
         ref={introRef}
-        className={`doomsday__video doomsday__video--backdrop ${introFinished ? "is-hidden" : ""}`}
+        className={`doomsday__video ${introFinished || videoSceneHidden ? "is-hidden" : ""}`}
         autoPlay
         muted={muted}
         playsInline
@@ -640,7 +696,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       </video>
       <video
         ref={loopRef}
-        className={`doomsday__video doomsday__video--backdrop ${introFinished ? "" : "is-hidden"}`}
+        className={`doomsday__video ${introFinished && !videoSceneHidden ? "" : "is-hidden"}`}
         muted={muted}
         playsInline
         loop
@@ -648,27 +704,12 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       >
         <source src="/countdown_1920x1920_loop_c.mp4" type="video/mp4" />
       </video>
-      <video
-        className={`doomsday__video doomsday__video--scene ${introFinished ? "is-hidden" : ""}`}
-        autoPlay
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/countdown_1920x1920_c.mp4" type="video/mp4" />
-      </video>
-      <video
-        className={`doomsday__video doomsday__video--scene ${introFinished ? "" : "is-hidden"}`}
-        autoPlay
-        muted
-        playsInline
-        loop
-        preload="auto"
-        aria-hidden="true"
-      >
-        <source src="/countdown_1920x1920_loop_c.mp4" type="video/mp4" />
-      </video>
+      {activeScene.src && (
+        <div className="character-scene" key={activeScene.src} aria-hidden="true">
+          <Image className="character-scene__portrait" src={activeScene.src} alt="" fill sizes="100vw" />
+          <div className="character-scene__atmosphere" />
+        </div>
+      )}
 
       <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />
       <audio ref={ambientRef} src="/sounds/1234.mp3" preload="auto" muted={muted} onEnded={restartAmbient} />
@@ -680,6 +721,14 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       <button className="share-button" onClick={prepareShare} aria-label="Compartilhar contagem nos Stories">
         <span>SHARE</span>
       </button>
+      <nav className="scene-nav" aria-label="Escolher personagem do relógio">
+        <button onClick={() => changeClockScene(-1)} aria-label="Personagem anterior">‹</button>
+        <span className="scene-nav__label">
+          <small>SCENE {String(currentScene + 1).padStart(2, "0")} / {String(clockScenes.length).padStart(2, "0")}</small>
+          <strong>{activeScene.name}</strong>
+        </span>
+        <button onClick={() => changeClockScene(1)} aria-label="Próximo personagem">›</button>
+      </nav>
 
       <main className="countdown-content">
         <button className="trailer-play" onClick={openTrailer} aria-label="Assistir ao trailer">
@@ -710,6 +759,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         <a href="https://www.marvel.com/movies" target="_blank" rel="noreferrer">Visite o site oficial da Marvel Studios</a>
       </footer>
       <span className="signature">by: pedrodev</span>
+      <div className="scene-curtain" aria-hidden="true" />
 
       {shareOpen && (
         <section className="share-dialog" role="dialog" aria-modal="true" aria-label="Compartilhar nos Stories">
