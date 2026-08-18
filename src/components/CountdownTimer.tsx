@@ -28,30 +28,35 @@ interface HeroArtwork {
 }
 
 const heroArtworks: HeroArtwork[] = [
-  { src: "/share-heroes/endgame-12.jpg", side: "right", phrase: "NINGUÉM ESCAPA DA CONTAGEM" },
-  { src: "/share-heroes/endgame-3.jpg", side: "right", phrase: "QUANDO O RELÓGIO PARAR, CORRA" },
-  { src: "/share-heroes/endgame-13.jpg", side: "right", phrase: "O CÉU NÃO VAI RESPONDER" },
-  { src: "/share-heroes/fantastic-reed.jpg", single: true, focus: .78, phrase: "NEM TODA EQUAÇÃO TEM SAÍDA" },
-  { src: "/share-heroes/fantastic-sue.jpg", single: true, phrase: "O INVISÍVEL JÁ ESTÁ ENTRE NÓS" },
-  { src: "/share-heroes/fantastic-johnny.jpg", single: true, phrase: "ATÉ AS ESTRELAS VÃO QUEIMAR" },
-  { src: "/share-heroes/fantastic-ben.jpg", single: true, phrase: "A ÚLTIMA PEDRA VAI CAIR" },
-  { src: "/share-heroes/endgame-11.jpg", side: "right", phrase: "ALGO ACORDOU ENTRE OS MUNDOS" },
-  { src: "/share-heroes/endgame-4.jpg", side: "right", phrase: "ESTA NOITE SERÁ A ÚLTIMA" },
-  { src: "/share-heroes/endgame-1.jpg", side: "left", phrase: "O FUTURO TERMINA AQUI" },
-  { src: "/share-heroes/endgame-2.jpg", side: "right", phrase: "VOCÊ OUVIU O ÚLTIMO SINAL?" },
-  { src: "/share-heroes/endgame-3.jpg", side: "left", phrase: "AS PORTAS JÁ ESTÃO ABERTAS" },
-  { src: "/share-heroes/endgame-8.jpg", side: "left", phrase: "O FIM APRENDEU SEU NOME" },
-  { src: "/share-heroes/endgame-1.jpg", side: "right", phrase: "TODO SACRIFÍCIO SERÁ ESQUECIDO" },
-  { src: "/share-heroes/endgame-15.jpg", side: "right", phrase: "NÃO EXISTE VOLTA PARA CASA" },
-  { src: "/share-heroes/endgame-7.jpg", side: "left", phrase: "O SILÊNCIO CHEGA PRIMEIRO" },
-  { src: "/share-heroes/endgame-12.jpg", side: "left", phrase: "RESTARÃO APENAS CINZAS" },
-  { src: "/share-heroes/cyclops.jpg", single: true, phrase: "NÃO OLHE PARA A LUZ" },
-  { src: "/share-heroes/professor-x.jpg", single: true, phrase: "ELE JÁ ESTÁ NA SUA MENTE" },
-  { src: "/share-heroes/magneto.jpg", single: true, phrase: "O MUNDO VAI SE CURVAR" },
-  { src: "/share-heroes/gambit.jpg", single: true, phrase: "A ÚLTIMA CARTA FOI LANÇADA" },
-  { src: "/share-heroes/mystique.jpg", single: true, phrase: "NÃO CONFIE NO ROSTO À SUA FRENTE" },
-  { src: "/share-heroes/ms-marvel.jpg", single: true, phrase: "OS HERÓIS TAMBÉM SENTEM MEDO" },
-  { src: "/share-heroes/doctor-doom.jpg", single: true, focus: .75, phrase: "O DESTINO SEMPRE CHEGA" },
+  { src: "/share-cinematic/thor.png", single: true, phrase: "NEM OS DEUSES OUVIRAM O SINAL" },
+  { src: "/share-cinematic/captain-america.png", single: true, phrase: "O CÉU NÃO VAI RESPONDER" },
+  { src: "/share-cinematic/steve-rogers.png", single: true, phrase: "O PASSADO VOLTOU PARA COBRAR" },
+  { src: "/share-cinematic/winter-soldier.png", single: true, phrase: "ALGUMAS GUERRAS NUNCA TERMINAM" },
+  { src: "/share-cinematic/shuri.png", single: true, phrase: "NENHUMA TECNOLOGIA PREVIU O FIM" },
+  { src: "/share-cinematic/ant-man.png", single: true, phrase: "ATÉ O MENOR MUNDO VAI CAIR" },
+  { src: "/share-cinematic/us-agent.png", single: true, phrase: "NÃO EXISTEM ORDENS PARA O FIM" },
+  { src: "/share-cinematic/namor.png", single: true, phrase: "O ABISMO TAMBÉM SENTIU MEDO" },
+  { src: "/share-cinematic/thing.png", single: true, phrase: "A ÚLTIMA PEDRA VAI CAIR" },
+  { src: "/share-cinematic/shang-chi.png", single: true, phrase: "OS ANÉIS OUVIRAM O CHAMADO" },
+  { src: "/share-cinematic/yelena.png", single: true, phrase: "NINGUÉM SAI DESTA MISSÃO" },
+  { src: "/share-cinematic/beast.png", single: true, phrase: "A CIÊNCIA NÃO TEM MAIS RESPOSTAS" },
+  { src: "/share-cinematic/sentry.png", single: true, phrase: "A LUZ TAMBÉM PROJETA MONSTROS" },
+  { src: "/share-cinematic/falcon.png", single: true, phrase: "O ÚLTIMO VOO JÁ COMEÇOU" },
+  { src: "/share-cinematic/human-torch.png", single: true, phrase: "ATÉ AS ESTRELAS VÃO QUEIMAR" },
+  { src: "/share-cinematic/red-guardian.png", single: true, phrase: "NÃO HAVERÁ UMA ÚLTIMA VITÓRIA" },
+  { src: "/share-cinematic/mbaku.png", single: true, phrase: "AS MONTANHAS TAMBÉM SE CURVAM" },
+  { src: "/share-cinematic/ghost.png", single: true, phrase: "O INVISÍVEL JÁ ESTÁ ENTRE NÓS" },
+  { src: "/share-cinematic/professor-x.png", single: true, phrase: "ELE JÁ ESTÁ NA SUA MENTE" },
+  { src: "/share-cinematic/magneto.png", single: true, phrase: "O MUNDO VAI SE CURVAR" },
+  { src: "/share-cinematic/nightcrawler.png", single: true, phrase: "NÃO HÁ LUGAR PARA ONDE FUGIR" },
+  { src: "/share-cinematic/cyclops.png", single: true, phrase: "NÃO OLHE PARA A LUZ" },
+  { src: "/share-cinematic/gambit.png", single: true, phrase: "A ÚLTIMA CARTA FOI LANÇADA" },
+  { src: "/share-cinematic/mister-fantastic.png", single: true, phrase: "NEM TODA EQUAÇÃO TEM SAÍDA" },
+  { src: "/share-cinematic/invisible-woman.png", single: true, phrase: "O SILÊNCIO CHEGA PRIMEIRO" },
+  { src: "/share-cinematic/doctor-doom.png", single: true, phrase: "O DESTINO SEMPRE CHEGA" },
+  { src: "/share-cinematic/witch-green.png", single: true, phrase: "A TERRA SE LEMBRA DO NOME DELE" },
+  { src: "/share-cinematic/witch-orange.png", single: true, phrase: "A PROTEÇÃO SE TORNOU UMA PRISÃO" },
+  { src: "/share-cinematic/witch-purple.png", single: true, phrase: "A MAGIA ABRIU A PORTA ERRADA" },
 ];
 
 function drawDistressedPhrase(
@@ -379,9 +384,27 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     heroContext.fillRect(artworkX, artworkY, artworkWidth, artworkHeight);
 
     context.save();
-    context.globalAlpha = .76;
+    context.globalAlpha = .2;
+    context.globalCompositeOperation = "screen";
+    context.filter = "blur(26px) saturate(1.35)";
+    context.drawImage(heroLayer, -18, -10, width + 36, height + 20);
+    context.restore();
+
+    context.save();
+    context.globalAlpha = .72;
     context.globalCompositeOperation = "screen";
     context.drawImage(heroLayer, 0, 0);
+    context.restore();
+
+    const spectralLight = context.createLinearGradient(0, height * .2, width, height * .65);
+    spectralLight.addColorStop(0, "rgba(26,92,49,0)");
+    spectralLight.addColorStop(.42, "rgba(114,255,139,.1)");
+    spectralLight.addColorStop(.58, "rgba(193,255,205,.04)");
+    spectralLight.addColorStop(1, "rgba(8,38,21,0)");
+    context.save();
+    context.globalCompositeOperation = "screen";
+    context.fillStyle = spectralLight;
+    context.fillRect(0, 0, width, height);
     context.restore();
 
     const edgeMist = context.createRadialGradient(
@@ -412,6 +435,20 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     shade.addColorStop(1, "rgba(0,0,0,.78)");
     context.fillStyle = shade;
     context.fillRect(0, 0, width, height);
+
+    let grainSeed = Array.from(heroArtwork.src).reduce((value, character) => value + character.charCodeAt(0), 41);
+    const grainRandom = () => {
+      grainSeed = (grainSeed * 9301 + 49297) % 233280;
+      return grainSeed / 233280;
+    };
+    context.save();
+    context.globalCompositeOperation = "soft-light";
+    for (let index = 0; index < 850; index += 1) {
+      const brightness = grainRandom() > .5 ? 255 : 0;
+      context.fillStyle = `rgba(${brightness},${brightness},${brightness},${.018 + grainRandom() * .035})`;
+      context.fillRect(grainRandom() * width, grainRandom() * height, 1 + grainRandom() * 1.5, 1 + grainRandom() * 1.5);
+    }
+    context.restore();
 
     const logoWidth = width * .64;
     const logoHeight = logoWidth * (logo.naturalHeight / logo.naturalWidth);
@@ -592,7 +629,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
     <div className={`doomsday is-ready ${trailerVisible ? "trailer-active" : ""} ${signalGlitch && introPhase === "done" && !trailerVisible ? "signal-glitch" : ""}`}>
       <video
         ref={introRef}
-        className={`doomsday__video ${introFinished ? "is-hidden" : ""}`}
+        className={`doomsday__video doomsday__video--backdrop ${introFinished ? "is-hidden" : ""}`}
         autoPlay
         muted={muted}
         playsInline
@@ -603,11 +640,32 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
       </video>
       <video
         ref={loopRef}
-        className={`doomsday__video ${introFinished ? "" : "is-hidden"}`}
+        className={`doomsday__video doomsday__video--backdrop ${introFinished ? "" : "is-hidden"}`}
         muted={muted}
         playsInline
         loop
         preload="auto"
+      >
+        <source src="/countdown_1920x1920_loop_c.mp4" type="video/mp4" />
+      </video>
+      <video
+        className={`doomsday__video doomsday__video--scene ${introFinished ? "is-hidden" : ""}`}
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+      >
+        <source src="/countdown_1920x1920_c.mp4" type="video/mp4" />
+      </video>
+      <video
+        className={`doomsday__video doomsday__video--scene ${introFinished ? "" : "is-hidden"}`}
+        autoPlay
+        muted
+        playsInline
+        loop
+        preload="auto"
+        aria-hidden="true"
       >
         <source src="/countdown_1920x1920_loop_c.mp4" type="video/mp4" />
       </video>
