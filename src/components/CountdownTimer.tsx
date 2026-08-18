@@ -599,7 +599,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         preload="auto"
         onEnded={finishIntro}
       >
-        <source src="/countdown_1920x1920.mp4" type="video/mp4" />
+        <source src="/countdown_1920x1920_c.mp4" type="video/mp4" />
       </video>
       <video
         ref={loopRef}
@@ -609,7 +609,7 @@ export function CountdownTimer({ targetDate }: CountdownTimerProps) {
         loop
         preload="auto"
       >
-        <source src="/countdown_1920x1920_loop.mp4" type="video/mp4" />
+        <source src="/countdown_1920x1920_loop_c.mp4" type="video/mp4" />
       </video>
 
       <audio ref={tickRef} src="/sounds/tick.mp3" preload="auto" />

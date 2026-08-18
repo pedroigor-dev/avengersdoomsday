@@ -53,7 +53,7 @@ button, a { font: inherit; }
 }
 
 @media (orientation: portrait) {
-  .doomsday__video { width: auto; height: 210%; max-width: none; }
+  .doomsday__video { width: auto; height: 100%; max-width: none; }
 }
 
 .audio-button {
